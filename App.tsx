@@ -8,7 +8,9 @@ import {StackScreenProps} from '@react-navigation/stack'; // Asegúrate de impor
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
 import CreatePartScreen from './screens/CreatePartScreen'; // Tu nueva pantalla de creación (ahora .tsx)
-import MenuScreen from './screens/MenuScreen'; // ¡La nueva pantalla para el menú!
+import MenuScreen from './screens/MenuScreen';
+import ParteInfoScreen from "./screens/ParteInfoScreen";
+import {ParteData} from "./config/apiService"; // ¡La nueva pantalla para el menú!
 
 // --- Definiciones de tipos ---
 // Parámetros para el Root Stack
@@ -27,6 +29,7 @@ export type RootStackParamList = {
 export type MainTabParamList = {
     ListarPartes: { user: any; accessToken: string };
     CrearParte: { user: any; accessToken: string };
+    InfoParte: { user: any; accessToken: string; parte_id: number };
 };
 
 
@@ -77,6 +80,25 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                         }}
                     />
                 )}
+            </MainTabStack.Screen>
+            <MainTabStack.Screen name="InfoParte">
+                {props => {
+                    // Extract 'parte' from props.route.params
+                    const { parte_id } = props.route.params as { parte_id: number }; // Assert the type to access 'parte'
+                    return (
+                        <ParteInfoScreen
+                            {...props}
+                            route={{
+                                ...props.route,
+                                params: {
+                                    ...props.route.params,
+                                    user,
+                                    parte_id, // Now 'parte' is defined here
+                                },
+                            }}
+                        />
+                    );
+                }}
             </MainTabStack.Screen>
         </MainTabStack.Navigator>
     );

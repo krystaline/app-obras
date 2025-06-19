@@ -9,6 +9,7 @@ interface CustomSelectItem {
     contact?: any;
     teamManager?: any;
     createdAt?: string;
+    comments ?: string
 }
 const MyCustomSelect = ({
                             items,

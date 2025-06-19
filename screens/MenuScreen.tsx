@@ -2,7 +2,8 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import {RootStackParamList} from '../App'; // Importa tu RootStackParamList
+import {RootStackParamList} from '../App';
+import {ParteData} from "../config/apiService"; // Importa tu RootStackParamList
 
 type MenuScreenProps = StackScreenProps<RootStackParamList, 'Menu'>; // Define el tipo para esta pantalla
 
@@ -19,6 +20,13 @@ export default function MenuScreen({navigation, route}: MenuScreenProps) {
         });
     };
 
+
+    const handleLogout = () => {
+        navigation.reset({
+            index: 0,
+            routes: [{name: 'Login'}],
+        });
+    };
 
     return (
         <SafeAreaView style={styles.container}>

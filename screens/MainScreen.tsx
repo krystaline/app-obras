@@ -1,12 +1,10 @@
 // MenuScreen.tsx
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList, RefreshControl, Alert} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList, RootStackParamList} from '../App';
 import {Ionicons} from "@expo/vector-icons";
 import {apiService, ParteData} from "../config/apiService"; // Importa tu RootStackParamList
-import {Proyecto} from '../config/apiService';
-
 
 type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartes'> & {
     navigation: StackScreenProps<RootStackParamList>['navigation']; // Para acceder al RootStack
@@ -59,17 +57,22 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
 
 
     const renderItem = ({item}: { item: ParteData }) => (
-        <TouchableOpacity style={styles.itemContainer}>
+        <TouchableOpacity style={styles.itemContainer}
+                          onPress={() => navigation.navigate('InfoParte', {parte_id: item.id})}
+        >
             <View style={styles.itemHeader}>
-                <Text style={styles.itemTitle}>{item.project.id} - {item.project.title} - {item.teamManager.name}</Text>
+                <Text style={styles.itemTitle}>{item.project.id} - {item.project.title} </Text>
                 <View style={[styles.statusBadge, {backgroundColor: getStatusColor(item.status)}]}>
                     <Ionicons name={getStatusIcon(item.status) as any} size={12} color="white"
                               style={styles.statusIcon}/>
                     <Text style={styles.statusText}>{item.status}</Text>
                 </View>
+
             </View>
+
+            <Text style={styles.itemDate}>{item.teamManager.name}</Text>
+            <Text style={styles.itemDate}>Fecha: {(item.parteDate)}</Text>
             <Text style={styles.itemDescription}>{item.actividades[0].name}</Text>
-            <Text style={styles.itemDate}>Fecha: {item.parteDate}</Text>
         </TouchableOpacity>
     )
 
@@ -177,7 +180,8 @@ const styles = StyleSheet.create({
     },
     itemDescription: {
         fontSize: 14,
-        color: "#64748b",
+        color: "#3b4955",
+        marginTop: 8,
         marginBottom: 8,
         lineHeight: 20,
     },

@@ -6,13 +6,11 @@ import {
     Button,
     Alert,
     ActivityIndicator,
-    Image
+
 } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import {useNavigation} from "@react-navigation/native";
-import mainScreen from "../screens/MainScreen";
-import MainScreen from "../screens/MainScreen";
 
 const redirectUri = AuthSession.makeRedirectUri({
     scheme: 'appobras'

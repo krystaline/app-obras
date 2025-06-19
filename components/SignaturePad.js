@@ -1,5 +1,5 @@
 import React, {useRef} from 'react';
-import {View, Text, StyleSheet, Button, Alert} from 'react-native';
+import {View, Text, StyleSheet, Button} from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 
 // Agregamos una prop `onDrawingStatusChange` para notificar al padre

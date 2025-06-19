@@ -58,7 +58,7 @@ export interface ParteData {
     actividades: Actividad[]
     status: "active" | "pending" | "completed"
     signature : string
-
+    comments: string
 
 }
 
@@ -191,6 +191,15 @@ Error $
 
     async getContactos(accessToken: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/contacts', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+    }
+
+    async getParte(accessToken: string, id: number): Promise<ApiResponse<any>> {
+        return this.makeRequest(`/api/partes/${id}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,

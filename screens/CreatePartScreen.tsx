@@ -4,17 +4,15 @@ import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     TouchableOpacity,
     Alert,
     ScrollView,
-    Platform,
-    ActivityIndicator
+    ActivityIndicator, TextInput
 } from 'react-native';
 
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList, RootStackParamList} from '../App';
-import {apiService, ParteData, Actividad, Proyecto, Contact, TeamManager} from '../config/apiService';
+import {apiService, ParteData, Actividad} from '../config/apiService';
 import ElementsTable from '../components/ElementsTable'
 import SignaturePad from "../components/SignaturePad";
 
@@ -58,6 +56,7 @@ export default function CreatePartScreen({route, navigation}: CreatePartScreenPr
     const [ascensorValue1, setAscensorValue1] = useState(0);
 
     // Estados locales
+    const [comentarios, setComentarios] = useState('');
     const [loading, setLoading] = useState(false);
     const [fechaParte, setFechaParte] = useState(new Date().toISOString());
     const [signature, setSignature] = useState<string | null>(null);
@@ -77,9 +76,6 @@ export default function CreatePartScreen({route, navigation}: CreatePartScreenPr
     const handleSignatureSaved = (signatureData: string) => {
         setSignature(signatureData);
     };
-    const handleSignatureCleared = () => {
-        setSignature(null);
-    }
 
     const handleDrawingStatusChange = (isDrawing: boolean) => {
         setIsScrollingEnabled(!isDrawing);
@@ -148,7 +144,8 @@ export default function CreatePartScreen({route, navigation}: CreatePartScreenPr
                 teamManager: selectedProject.teamManager,
                 actividades: activitiesToSend,
                 project: selectedProject,
-                signature: signature // Incluir la firma en los datos
+                signature: signature, // Incluir la firma en los datos
+                comments: comentarios
             }
 
 
@@ -231,7 +228,13 @@ export default function CreatePartScreen({route, navigation}: CreatePartScreenPr
                     setAscensorValue1={setAscensorValue1}
                     setFechaParte={setFechaParte}
                 />
-
+                <View>
+                    <Text style={styles.loadingText}>Comentarios:</Text>
+                    <TextInput style={styles.fieldContainer}
+                               value={comentarios}
+                               onChangeText={setComentarios}
+                               multiline={true}/>
+                </View>
                 {/* Información del usuario */}
                 <View style={styles.infoContainer}>
                     <Text style={styles.infoLabel}>Creado por:</Text>
