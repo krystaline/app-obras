@@ -5,86 +5,206 @@ import {
     Text,
     StyleSheet,
     TextInput,
-    Button,
-    Alert,
     TouchableOpacity,
+    Alert,
     ScrollView,
-    Platform // Para ajustes específicos de plataforma si fueran necesarios
+    Platform,
+    ActivityIndicator
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker'; // Necesitarás instalar esta librería
-import {Ionicons} from '@expo/vector-icons';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList, RootStackParamList} from '../App'; // Importa tus tipos de parámetros
 
-// Tipo de props para CreatePartScreen
-// Ahora CreatePartScreen está dentro de MainTabStack, pero también necesita navegar al RootStack (para el menú)
+import {StackScreenProps} from '@react-navigation/stack';
+import {MainTabParamList, RootStackParamList} from '../App';
+import {apiService, ParteData, Actividad, Proyecto, Contact, TeamManager} from '../config/apiService';
+import ElementsTable from '../components/ElementsTable'
+import SignaturePad from "../components/SignaturePad";
+
+// CreatePartScreen.tsx
+
 type CreatePartScreenProps = StackScreenProps<MainTabParamList, 'CrearParte'> & {
-    navigation: StackScreenProps<RootStackParamList>['navigation']; // Para acceder al RootStack (para el menú)
+    navigation: StackScreenProps<RootStackParamList>['navigation'];
 };
 
+interface ElementRow {
+    id: number
+    description: string
+    quantity: string
+    unit: string
+    impValue?: string
+}
+
+interface CustomSelectItem {
+    id: string;
+    title: string;
+    contact: {
+        id: string;
+        title: string;
+        signature: string;
+        phone: number;
+    };
+    teamManager: {
+        id: string;
+        name: string;
+    };
+    createdAt: string;
+}
+
 export default function CreatePartScreen({route, navigation}: CreatePartScreenProps) {
-    // Asegúrate de que user y accessToken se reciben correctamente de route.params
     const {user, accessToken} = route.params;
 
-    // Estado para los campos del formulario
-    const [nombreObra, setNombreObra] = useState('');
-    const [medidaValor, setMedidaValor] = useState(''); // Usamos string para TextInput
-    const [medidaUnidad, setMedidaUnidad] = useState('metros'); // Valor inicial del desplegable
+    // Estados para los datos que vienen de ElementsTable
+    const [selectedProject, setSelectedProject] = useState<CustomSelectItem | null>(null);
+    const [tableElements, setTableElements] = useState<ElementRow[]>([]);
+    const [ascensorValue, setAscensorValue] = useState(0);
+    const [ascensorValue1, setAscensorValue1] = useState(0);
 
-    // Log para depuración: verifica si user es undefined aquí
-    console.log('CreatePartScreen - Received user:', user);
-    console.log('CreatePartScreen - Received accessToken:', accessToken);
+    // Estados locales
+    const [loading, setLoading] = useState(false);
+    const [fechaParte, setFechaParte] = useState(new Date().toISOString());
+    const [signature, setSignature] = useState<string | null>(null);
+    const [isScrollingEnabled, setIsScrollingEnabled] = useState(true);
+    const [parteId, setParteId] = useState(0);
 
 
-    // Función para manejar el envío del formulario
-    const handleSubmit = () => {
-        // Validación básica
-        if (!nombreObra.trim()) {
-            Alert.alert("Error de Validación", "Por favor, introduce el nombre de la obra.");
-            return;
-        }
-
-        if (!medidaValor.trim()) {
-            Alert.alert("Error de Validación", "Por favor, introduce el valor de la medida.");
-            return;
-        }
-
-        const valorNumerico = parseFloat(medidaValor);
-        if (isNaN(valorNumerico)) {
-            Alert.alert("Error de Validación", "El valor de la medida debe ser numérico.");
-            return;
-        }
-
-        // Aquí iría la lógica para enviar estos datos a tu API o base de datos
-        // Puedes usar `nombreObra`, `valorNumerico`, `medidaUnidad`, `user.id`, `accessToken`
-        console.log({
-            nombreObra,
-            medida: {
-                valor: valorNumerico,
-                unidad: medidaUnidad,
-            },
-            creadoPor: user ? user.displayName : 'Desconocido', // Uso defensivo de user
-            accessToken: accessToken,
-        });
-
-        // Simulación de envío exitoso
-        Alert.alert(
-            "Parte Creado",
-            `Obra: "${nombreObra}"\nMedida: ${valorNumerico} ${medidaUnidad}\nCreado por: ${user ? user.displayName : 'N/A'}`
-        );
-
-        // Limpiar el formulario después del envío exitoso
-        setNombreObra('');
-        setMedidaValor('');
-        setMedidaUnidad('metros'); // Restablecer a la unidad por defecto
+    // Callbacks para recibir datos de ElementsTable
+    const handleProjectSelect = (project: CustomSelectItem | null) => {
+        setSelectedProject(project);
     };
 
-    // Si el usuario no se cargó correctamente, mostrar un mensaje de error o loading
+    const handleElementsChange = (elements: ElementRow[]) => {
+        setTableElements(elements);
+    };
+
+    const handleSignatureSaved = (signatureData: string) => {
+        setSignature(signatureData);
+    };
+    const handleSignatureCleared = () => {
+        setSignature(null);
+    }
+
+    const handleDrawingStatusChange = (isDrawing: boolean) => {
+        setIsScrollingEnabled(!isDrawing);
+    };
+
+    const handleSubmit = async () => {
+        // Validaciones
+        if (!selectedProject) {
+            Alert.alert("Error", "Por favor, selecciona un proyecto.");
+            return;
+        }
+
+        if (!signature) {
+            Alert.alert("Error", "Por favor, añade tu firma.");
+            return;
+        }
+
+        // Verificar que hay al menos una actividad con cantidad
+        const hasActivities = tableElements.some(el =>
+            parseFloat(el.quantity) > 0 && el.description.trim() !== ''
+        );
+
+        if (!hasActivities) {
+            Alert.alert("Error", "Por favor, añade al menos una actividad con cantidad.");
+            return;
+        }
+
+        //@ts-ignore
+        const activitiesToSend: Actividad[] = tableElements.map(el => {
+            let activityName = el.description;
+
+            if (el.id === 4) { // Foso Ascensor 1
+                activityName = `Foso Ascensor - ${ascensorValue}`;
+            } else if (el.id === 5) { // Foso Ascensor 2
+                activityName = `Foso Ascensor - ${ascensorValue1}`;
+            } else if (el.id === 11 && el.impValue) { // Impermeabilización superficial
+                activityName = `Impermeabilización superficial ${el.impValue} Krystaline 1`;
+            }
+
+            // Para filas personalizadas (16, 17), si no hay descripción, no enviar
+            if ((el.id === 16 || el.id === 17) && !el.description.trim()) {
+                return null;
+            }
+
+            return {
+                id: el.id,
+                name: activityName,
+                cantidad: parseFloat(el.quantity) || 0,
+                unidad: el.unit,
+            };
+        }).filter(act => act !== null && act.cantidad > 0);
+
+        setLoading(true);
+
+        apiService.getLastPartId(accessToken).then(response => {
+            setParteId(response.data)
+            console.log("Parte ID: ", parteId)
+        })
+
+        try {
+            const parteData: ParteData = {
+
+                id: parteId,
+                status: "active",
+                parteDate: fechaParte,
+                teamManager: selectedProject.teamManager,
+                actividades: activitiesToSend,
+                project: selectedProject,
+                signature: signature // Incluir la firma en los datos
+            }
+
+
+            const response = await apiService.createParte(parteData, accessToken);
+
+            if (response.success) {
+                Alert.alert(
+                    "Éxito",
+                    "Parte creado exitosamente",
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => navigation.goBack()
+                        }
+                    ]
+                );
+            } else {
+                console.error('❌ Error del servidor:', response.error);
+                Alert.alert(
+                    "Error del Servidor",
+                    response.error || response.message || "No se pudo crear el parte",
+                    [
+                        {
+                            text: "Reintentar",
+                            onPress: () => handleSubmit()
+                        },
+                        {
+                            text: "OK",
+                            style: "cancel"
+                        }
+                    ]
+                );
+            }
+
+        } catch (error: any) {
+            console.error('🚨 Error inesperado:', error);
+            Alert.alert(
+                "Error",
+                "Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.",
+                [
+                    {
+                        text: "OK",
+                        style: "cancel"
+                    }
+                ]
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (!user) {
         return (
             <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Cargando información del usuario o error...</Text>
-                {/* O un indicador de carga real */}
+                <ActivityIndicator size="large" color="#0078d4"/>
+                <Text style={styles.loadingText}>Cargando información del usuario...</Text>
             </View>
         );
     }
@@ -92,64 +212,76 @@ export default function CreatePartScreen({route, navigation}: CreatePartScreenPr
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                {/* Botón para abrir el Menú, navega a la pantalla 'Menu' en el RootStack */}
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('Menu', {user, accessToken})}
-                    style={styles.menuButton}
-                >
-                    <Ionicons name="menu" size={30} color="#1e293b"/>
-                </TouchableOpacity>
-                <View>
+                <View style={styles.headerContent}>
                     <Text style={styles.headerTitle}>Crear Nuevo Parte</Text>
-                    <Text style={styles.headerSubtitle}>Introduce los detalles del nuevo parte de obra</Text>
+                    <Text style={styles.headerSubtitle}>Introduce los detalles del parte de obra</Text>
                 </View>
             </View>
 
-            {/* ScrollView para asegurar que el formulario sea desplazable si es largo o el teclado lo cubre */}
-            <ScrollView contentContainerStyle={styles.formContainer}>
-                {/* Campo: Nombre de Obra */}
-                <Text style={styles.label}>Nombre de Obra:</Text>
-                <TextInput
-                    style={styles.input}
-                    value={nombreObra}
-                    onChangeText={setNombreObra}
-                    placeholder="Ej: Reforma Cocina"
-                    placeholderTextColor="#94a3b8"
+            <ScrollView scrollEnabled={isScrollingEnabled} contentContainerStyle={styles.formContainer}>
+
+                <ElementsTable
+                    user={user}
+                    accessToken={accessToken}
+                    onProjectSelect={handleProjectSelect}
+                    onElementsChange={handleElementsChange}
+                    ascensorValue={ascensorValue}
+                    setAscensorValue={setAscensorValue}
+                    ascensorValue1={ascensorValue1}
+                    setAscensorValue1={setAscensorValue1}
+                    setFechaParte={setFechaParte}
                 />
 
-                {/* Campo: Medida (Valor y Unidad) */}
-                <Text style={styles.label}>Medida:</Text>
-                <View style={styles.measureInputContainer}>
-                    {/* Campo de texto numérico para el valor de la medida */}
-                    <TextInput
-                        style={styles.measureValueInput}
-                        value={medidaValor}
-                        onChangeText={setMedidaValor}
-                        keyboardType="numeric" // Solo permite entrada numérica
-                        placeholder="Ej: 100"
-                        placeholderTextColor="#94a3b8"
-                    />
-                    {/* Desplegable para la unidad de medida */}
-                    <View style={styles.pickerContainer}>
-                        <Picker
-                            selectedValue={medidaUnidad}
-                            onValueChange={(itemValue: string) => setMedidaUnidad(itemValue)}
-                            style={styles.picker}
-                            // Opcional: itemStyle para iOS para controlar el estilo del texto en el picker
-                            itemStyle={Platform.OS === 'ios' ? styles.pickerItem : undefined}
-                        >
-                            <Picker.Item label="Metros (m)" value="metros"/>
-                            <Picker.Item label="Metros Cuadrados (m²)" value="m2"/>
-                            <Picker.Item label="Metros Cúbicos (m³)" value="m3"/>
-                            <Picker.Item label="Unidades" value="unidades"/>
-                            <Picker.Item label="Kilogramos (kg)" value="kg"/> {/* Otro valor */}
-                            <Picker.Item label="Litros (L)" value="litros"/> {/* Otro valor */}
-                        </Picker>
-                    </View>
+                {/* Información del usuario */}
+                <View style={styles.infoContainer}>
+                    <Text style={styles.infoLabel}>Creado por:</Text>
+                    <Text style={styles.infoValue}>{user.displayName}</Text>
                 </View>
 
-                {/* Botón para enviar el formulario */}
-                <Button title="Guardar Parte" onPress={handleSubmit} color="#0078d4"/>
+                <View style={styles.fieldContainer}>
+                    <SignaturePad
+                        onDrawingStatusChange={handleDrawingStatusChange}
+                        onSignatureSaved={handleSignatureSaved}
+                    />
+                </View>
+
+                {/* Resumen de datos (opcional, para debug) */}
+                {selectedProject && (
+                    <View style={styles.summaryContainer}>
+                        <Text style={styles.summaryTitle}>Resumen:</Text>
+                        <Text style={styles.summaryText}>Proyecto: {selectedProject.title}</Text>
+                        <Text style={styles.summaryText}>
+                            Actividades: {tableElements.filter(el => parseFloat(el.quantity) > 0).length}
+                        </Text>
+                        <Text style={styles.summaryText}>
+                            Firma: {signature ? "✓ Añadida" : "✗ Pendiente"}
+                        </Text>
+                    </View>
+                )}
+
+                {/* Botones */}
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        style={[styles.button, styles.cancelButton]}
+                        onPress={() => navigation.goBack()}
+                        disabled={loading}
+                    >
+                        <Text style={styles.cancelButtonText}>Cancelar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, styles.submitButton, loading && styles.disabledButton]}
+                        onPress={handleSubmit}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator size="small" color="white"/>
+                        ) : (
+                            <Text style={styles.submitButtonText}>Guardar Parte</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+
             </ScrollView>
         </View>
     );
@@ -164,15 +296,34 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: "#f8fafc",
+        backgroundColor: "white",
     },
     loadingText: {
-        fontSize: 18,
+        fontSize: 16,
         color: '#666',
+        marginTop: 10,
+    },
+    summaryContainer: {
+        backgroundColor: '#e6f7ff',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 20,
+        borderLeftWidth: 4,
+        borderLeftColor: '#fa2222',
+    },
+    summaryTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#090909',
+        marginBottom: 8,
+    },
+    summaryText: {
+        fontSize: 14,
+        color: '#424242',
+        marginBottom: 4,
     },
     header: {
         padding: 20,
-        paddingTop: Platform.OS === 'ios' ? 50 : 20, // Ajuste para iOS por la barra de estado
         backgroundColor: "white",
         borderBottomWidth: 1,
         borderBottomColor: "#e2e8f0",
@@ -183,6 +334,9 @@ const styles = StyleSheet.create({
         marginRight: 15,
         padding: 5,
     },
+    headerContent: {
+        flex: 1,
+    },
     headerTitle: {
         fontSize: 24,
         fontWeight: "bold",
@@ -191,59 +345,65 @@ const styles = StyleSheet.create({
     headerSubtitle: {
         fontSize: 16,
         color: "#64748b",
+        marginTop: 4,
     },
     formContainer: {
-        padding: 20,
+        padding: 10,
+        paddingBottom: 40,
     },
-    label: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        marginBottom: 8,
-        marginTop: 15,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        backgroundColor: 'white',
-        marginBottom: 10,
-        color: '#333', // Asegurar que el texto sea visible
-    },
-    measureInputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    fieldContainer: {
         marginBottom: 20,
     },
-    measureValueInput: {
+
+    infoContainer: {
+        backgroundColor: '#f1f5f9',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 30,
+        borderLeftWidth: 4,
+        borderLeftColor: '#3EB1A5',
+    },
+    infoLabel: {
+        fontSize: 14,
+        color: '#64748b',
+        marginBottom: 4,
+    },
+    infoValue: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1e293b',
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 15,
+    },
+    button: {
         flex: 1,
-        borderWidth: 1,
-        borderColor: '#ccc',
+        paddingVertical: 15,
         borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        backgroundColor: 'white',
-        marginRight: 10,
-        color: '#333', // Asegurar que el texto sea visible
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    pickerContainer: {
+    cancelButton: {
+        backgroundColor: 'white',
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 8,
-        flex: 1.2, // Ajusta el ancho relativo
-        backgroundColor: 'white',
-        overflow: 'hidden', // Para que el borde redondeado se vea bien en Android
+        borderColor: '#e2e8f0',
     },
-    picker: {
-        height: 50, // Altura estándar para Picker
-        width: '100%',
-        color: '#333', // Color del texto del Picker
-    },
-    pickerItem: {
-        // Solo para iOS para estilo de texto individual si es necesario
+    cancelButtonText: {
+        color: '#64748b',
         fontSize: 16,
-        color: '#333',
+        fontWeight: '600',
+    },
+    submitButton: {
+        backgroundColor: '#3EB1A5',
+    },
+    submitButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    disabledButton: {
+        backgroundColor: '#94a3b8',
     },
 });

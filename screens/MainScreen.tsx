@@ -1,56 +1,11 @@
 // MenuScreen.tsx
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList, RefreshControl} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, FlatList, RefreshControl, Alert} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList, RootStackParamList} from '../App';
-import {Ionicons} from "@expo/vector-icons"; // Importa tu RootStackParamList
-
-
-interface ListItem {
-    id: string
-    title: string
-    description: string
-    status: "active" | "pending" | "completed"
-    createdAt: string
-}
-
-const mockData: ListItem[] = [
-    {
-        id: "1",
-        title: "Project Alpha",
-        description: "Initial project setup and configuration",
-        status: "active",
-        createdAt: "2024-01-15",
-    },
-    {
-        id: "2",
-        title: "Database Migration",
-        description: "Update database schema to version 2.0",
-        status: "pending",
-        createdAt: "2024-01-14",
-    },
-    {
-        id: "3",
-        title: "UI Redesign",
-        description: "Complete redesign of the user interface",
-        status: "completed",
-        createdAt: "2024-01-13",
-    },
-    {
-        id: "4",
-        title: "API Integration",
-        description: "Integrate third-party payment API",
-        status: "active",
-        createdAt: "2024-01-12",
-    },
-    {
-        id: "5",
-        title: "Testing Phase",
-        description: "Comprehensive testing of all features",
-        status: "pending",
-        createdAt: "2024-01-11",
-    },
-]
+import {Ionicons} from "@expo/vector-icons";
+import {apiService, ParteData} from "../config/apiService"; // Importa tu RootStackParamList
+import {Proyecto} from '../config/apiService';
 
 
 type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartes'> & {
@@ -59,12 +14,18 @@ type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartes'> & {
 export default function MainScreen({route, navigation}: MainScreenProps) {
     const {user, accessToken} = route.params;
 
-    const [data, setData] = useState<ListItem[]>(mockData)
+    const [data, setData] = useState<ParteData[]>()
     const [refreshing, setRefreshing] = useState(false)
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true)
         // Simulate API call
+        apiService.getPartes(accessToken).then(response => {
+            setData(response.data)
+            console.log(response.data)
+        })
+
+
         setTimeout(() => {
             setRefreshing(false)
         }, 1000)
@@ -96,18 +57,19 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
         }
     }
 
-    const renderItem = ({item}: { item: ListItem }) => (
+
+    const renderItem = ({item}: { item: ParteData }) => (
         <TouchableOpacity style={styles.itemContainer}>
             <View style={styles.itemHeader}>
-                <Text style={styles.itemTitle}>{item.title}</Text>
+                <Text style={styles.itemTitle}>{item.project.id} - {item.project.title} - {item.teamManager.name}</Text>
                 <View style={[styles.statusBadge, {backgroundColor: getStatusColor(item.status)}]}>
                     <Ionicons name={getStatusIcon(item.status) as any} size={12} color="white"
                               style={styles.statusIcon}/>
                     <Text style={styles.statusText}>{item.status}</Text>
                 </View>
             </View>
-            <Text style={styles.itemDescription}>{item.description}</Text>
-            <Text style={styles.itemDate}>Created: {item.createdAt}</Text>
+            <Text style={styles.itemDescription}>{item.actividades[0].name}</Text>
+            <Text style={styles.itemDate}>Fecha: {item.parteDate}</Text>
         </TouchableOpacity>
     )
 
@@ -130,7 +92,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
             <FlatList
                 data={data}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.id}
+                keyExtractor={item => item.id.toString()}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
                 showsVerticalScrollIndicator={false}
@@ -151,10 +113,10 @@ const styles = StyleSheet.create({
         borderBottomColor: "#e2e8f0",
     },
     menuButton: {
-        position:  "absolute",
+        position: "absolute",
         marginTop: 32,
-        left: 22,
-        top: 22,
+        right: 22,
+        top: 40,
         transform: 'scale(1.4)',
     },
     headerTitle: {

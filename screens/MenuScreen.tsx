@@ -7,33 +7,19 @@ import {RootStackParamList} from '../App'; // Importa tu RootStackParamList
 type MenuScreenProps = StackScreenProps<RootStackParamList, 'Menu'>; // Define el tipo para esta pantalla
 
 export default function MenuScreen({navigation, route}: MenuScreenProps) {
-    // Recupera los parámetros de usuario pasados a esta pantalla
     const {user, accessToken} = route.params;
 
-    const navigateToList = () => {
-        navigation.navigate('MainTab', {
-            user, accessToken,
-            screen: 'ListarPartes', // Navega al Stack anidado y luego a la pantalla específica
-            params: {user, accessToken}
-        });
-        navigation.goBack(); // Cierra el menú (si se abrió como modal o en un stack)
-    };
 
     const navigateToCreate = () => {
-        console.log("crea parte")
+        console.log("Navegando a crear parte");
         navigation.navigate('MainTab', {
             user, accessToken,
-            screen: 'CrearParte', // Navega al Stack anidado y luego a la pantalla específica
+            screen: 'CrearParte',
             params: {user, accessToken}
         });
-
     };
 
-    const handleLogout = () => {
-        // Lógica de logout: limpiar tokens, etc.
-        navigation.popToTop(); // Vuelve a la pantalla de Login
-    };
-    console.log("E --> " + user);
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -41,19 +27,16 @@ export default function MenuScreen({navigation, route}: MenuScreenProps) {
                 <Text style={styles.username}>Hola, {user.displayName}</Text>
             </View>
 
-            <TouchableOpacity style={styles.menuItem} onPress={navigateToList}>
-                <Text style={styles.menuItemText}>Listar Partes de Obra</Text>
+            <TouchableOpacity style={styles.menuItem} onPress={navigation.goBack}>
+                <Text style={styles.menuItemText}>📋 Listar Partes de Obra</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.menuItem} onPress={navigateToCreate}>
-                <Text style={styles.menuItemText}>Crear Parte de Obra</Text>
+                <Text style={styles.menuItemText}>➕ Crear Parte de Obra</Text>
             </TouchableOpacity>
 
             <View style={styles.spacer}/>
 
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-            </TouchableOpacity>
         </SafeAreaView>
     );
 }
@@ -87,6 +70,9 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#e2e8f0',
         backgroundColor: 'white',
+        marginHorizontal: 10,
+        marginVertical: 5,
+        borderRadius: 8,
     },
     menuItemText: {
         fontSize: 18,
