@@ -1,10 +1,10 @@
 // MenuScreen.tsx
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl, TextInput} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList, RootStackParamList} from '../App';
 import {Ionicons} from "@expo/vector-icons";
-import {apiService, ParteData} from "../config/apiService"; // Importa tu RootStackParamList
+import {apiService, Oferta} from "../config/apiService"; // Importa tu RootStackParamList
 
 type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartes'> & {
     navigation: StackScreenProps<RootStackParamList>['navigation']; // Para acceder al RootStack
@@ -12,30 +12,48 @@ type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartes'> & {
 export default function MainScreen({route, navigation}: MainScreenProps) {
     const {user, accessToken} = route.params;
 
-    const [data, setData] = useState<ParteData[]>()
+    const [data, setData] = useState<Oferta[]>()
     const [refreshing, setRefreshing] = useState(false)
-
+    const [filteredData, setFilteredData] = useState<Oferta[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const onRefresh = React.useCallback(() => {
         setRefreshing(true)
-        // Simulate API call
-        apiService.getPartes(accessToken).then(response => {
+        apiService.getOfertas(accessToken).then(response => {
+            console.log("Ofertas: ", response.data)
             setData(response.data)
-            console.log(response.data)
         })
-
-
         setTimeout(() => {
             setRefreshing(false)
         }, 1000)
     }, [])
 
+    React.useEffect(() => {
+        if (searchQuery) {
+            const lowercasedQuery = searchQuery.toLowerCase();
+            const newFilteredData = data?.filter(item => {
+                // Add checks for null/undefined before calling toLowerCase()
+                const description = item.descripcion || ''; // Use empty string if null/undefined
+                const idProyecto = item.idProyecto || '';   // Use empty string if null/undefined
+
+                return (
+                    description.toLowerCase().includes(lowercasedQuery) ||
+                    idProyecto.toLowerCase().includes(lowercasedQuery)
+                );
+            });
+            setFilteredData(newFilteredData!!);
+        } else {
+            setFilteredData(data!!); // If search query is empty, show all data
+        }
+    }, [searchQuery, data]);// Dependencies: re-run when searchQuery or data changes
+
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "active":
+            case "activa":
                 return "#10b981"
             case "pending":
                 return "#f59e0b"
-            case "completed":
+            case "completada":
                 return "#6366f1"
             default:
                 return "#64748b"
@@ -44,11 +62,11 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case "active":
+            case "activa":
                 return "play-circle"
             case "pending":
                 return "time"
-            case "completed":
+            case "completada":
                 return "checkmark-circle"
             default:
                 return "help-circle"
@@ -56,23 +74,27 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
     }
 
 
-    const renderItem = ({item}: { item: ParteData }) => (
+    const renderItem = ({item}: { item: Oferta }) => (
         <TouchableOpacity style={styles.itemContainer}
-                          onPress={() => navigation.navigate('InfoParte', {parte_id: item.id})}
+                          onPress={() =>
+                              navigation.navigate('InfoOferta', {
+                                  idOferta: item.idOferta,
+                                  accessToken: accessToken,
+                                  user: user,
+                                  oferta: item
+                              })}
         >
             <View style={styles.itemHeader}>
-                <Text style={styles.itemTitle}>{item.project.id} - {item.project.title} </Text>
+
+                <Text style={styles.itemTitle}>{item.idProyecto} - {item.descripcion} </Text>
+
                 <View style={[styles.statusBadge, {backgroundColor: getStatusColor(item.status)}]}>
                     <Ionicons name={getStatusIcon(item.status) as any} size={12} color="white"
                               style={styles.statusIcon}/>
                     <Text style={styles.statusText}>{item.status}</Text>
                 </View>
-
             </View>
 
-            <Text style={styles.itemDate}>{item.teamManager.name}</Text>
-            <Text style={styles.itemDate}>Fecha: {(item.parteDate)}</Text>
-            <Text style={styles.itemDescription}>{item.actividades[0].name}</Text>
         </TouchableOpacity>
     )
 
@@ -87,15 +109,21 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
                     <Ionicons name="menu" size={30} color="#1e293b"/>
                 </TouchableOpacity>
                 <View>
-                    <Text style={styles.headerTitle}>Lista de Partes</Text>
-                    <Text style={styles.headerSubtitle}>Gestiona los partes de obra de {user.displayName}</Text>
+                    <Text style={styles.headerTitle}>Lista de Ofertas</Text>
+                    <TextInput
+                        style={styles.searchBar}
+                        placeholder="Buscar por nombre o ID de proyecto..."
+                        placeholderTextColor="#94a3b8"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery} // Update searchQuery state on text change
+                    />
                 </View>
             </View>
 
             <FlatList
-                data={data}
+                data={filteredData}
                 renderItem={renderItem}
-                keyExtractor={item => item.id.toString()}
+                keyExtractor={item => item.idOferta.toString()}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
                 showsVerticalScrollIndicator={false}
@@ -114,6 +142,17 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         borderBottomWidth: 1,
         borderBottomColor: "#e2e8f0",
+    },
+    searchBar: { // New style for the search input
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        fontSize: 16,
+        color: '#1e293b',
+        marginTop: 10, // Space between title and search bar
+        backgroundColor: '#f1f5f9',
     },
     menuButton: {
         position: "absolute",
@@ -163,6 +202,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     statusBadge: {
+        left: 8,
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 8,

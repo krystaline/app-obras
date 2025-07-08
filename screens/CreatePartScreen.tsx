@@ -12,7 +12,7 @@ import {
 
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList, RootStackParamList} from '../App';
-import {apiService, ParteData, Actividad} from '../config/apiService';
+import {apiService, ParteData, Actividad, ParteEnviadoPost} from '../config/apiService';
 import ElementsTable from '../components/ElementsTable'
 import SignaturePad from "../components/SignaturePad";
 
@@ -136,16 +136,14 @@ export default function CreatePartScreen({route, navigation}: CreatePartScreenPr
         })
 
         try {
-            const parteData: ParteData = {
+            const parteData: ParteEnviadoPost = {
 
-                id: parteId,
-                status: "active",
-                parteDate: fechaParte,
-                teamManager: selectedProject.teamManager,
-                actividades: activitiesToSend,
-                project: selectedProject,
+                idParte: parteId,
+                idOferta: idOferta,
                 signature: signature, // Incluir la firma en los datos
-                comments: comentarios
+
+                lineas: activitiesToSend,
+                comentarios: comentarios
             }
 
 

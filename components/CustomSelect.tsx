@@ -3,7 +3,7 @@ import {View, Text, TextInput, TouchableOpacity, Modal, FlatList, StyleSheet} fr
 
 
 interface CustomSelectItem {
-    id: number;
+    id: string;
     title?: string; // Hacemos 'title' opcional para ser más flexibles
     name?: string;  // También 'name' opcional si se usa en otros contextos
     contact?: any;
@@ -29,7 +29,7 @@ const MyCustomSelect = ({
 
     const filteredItems = Array.isArray(items) ? items.filter(item => {
         // Asegúrate de buscar por 'title' o 'name' según lo que use tu objeto
-        const itemText = (item.title || item.name || '').toLowerCase();
+        const itemText = (item.id || item.title || '').toLowerCase();
         return itemText.includes(searchText.toLowerCase());
     }) : [];
 
@@ -70,7 +70,8 @@ const MyCustomSelect = ({
                         {searchable && (
                             <TextInput
                                 style={styles.searchBar}
-                                placeholder="Buscar..."
+                                placeholder="Buscar por ID..."
+                                placeholderTextColor={'#222'}
                                 value={searchText}
                                 onChangeText={setSearchText}
                             />
@@ -83,7 +84,7 @@ const MyCustomSelect = ({
                                     style={styles.listItem}
                                     onPress={() => handleSelectItem(item)}
                                 >
-                                    <Text>{item.title || item.name} - {item.id}</Text> {/* Muestra title o name */}
+                                    <Text>{item.title || item.name} - <Text style={styles.boldText}>{item.id}</Text></Text> {/* Muestra title o name */}
                                 </TouchableOpacity>
                             )}
                             ListEmptyComponent={() => (
@@ -132,6 +133,10 @@ const styles = StyleSheet.create({
 
         //height: '100%'
     },
+    boldText: {
+        fontWeight: 'bold',
+    },
+
     centeredView: {
         flex: 1,
         justifyContent: 'center',
@@ -161,6 +166,7 @@ const styles = StyleSheet.create({
         borderColor: '#eee',
         borderRadius: 5,
         marginBottom: 10,
+        color: 'red',
     },
     listItem: {
         padding: 10,

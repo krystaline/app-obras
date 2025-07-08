@@ -11,14 +11,6 @@ export default function MenuScreen({navigation, route}: MenuScreenProps) {
     const {user, accessToken} = route.params;
 
 
-    const navigateToCreate = () => {
-        console.log("Navegando a crear parte");
-        navigation.navigate('MainTab', {
-            user, accessToken,
-            screen: 'CrearParte',
-            params: {user, accessToken}
-        });
-    };
 
 
     const handleLogout = () => {
@@ -36,12 +28,9 @@ export default function MenuScreen({navigation, route}: MenuScreenProps) {
             </View>
 
             <TouchableOpacity style={styles.menuItem} onPress={navigation.goBack}>
-                <Text style={styles.menuItemText}>📋 Listar Partes de Obra</Text>
+                <Text style={styles.menuItemText}>📋 Ofertas de diseño</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={navigateToCreate}>
-                <Text style={styles.menuItemText}>➕ Crear Parte de Obra</Text>
-            </TouchableOpacity>
 
             <View style={styles.spacer}/>
 

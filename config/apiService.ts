@@ -6,11 +6,11 @@ const getBaseUrl = () => {
     if (__DEV__) {
         // En desarrollo
         if (Platform.OS === 'android') {
-            return 'http://10.0.2.2:8082'; // Para emulador Android
+            return 'http://192.168.0.104:8082';
         } else if (Platform.OS === 'ios') {
-            return 'http://192.168.0.104:8082'; // Para simulador iOS
+            return 'http://10.0.2.104:8082';
         } else {
-            return 'http://192.168.0.104:8082'; // Reemplaza XXX con tu IP local
+            return 'http://192.168.0.104:8082';
         }
     } else {
         // En producción
@@ -22,6 +22,65 @@ const API_BASE_URL = getBaseUrl();
 
 
 // Tipos TypeScript
+export interface Oferta {
+    idOferta: number,
+    fecha: Date
+    cliente: string
+    idProyecto: string
+    descripcion: string
+    observaciones: string
+    status: string
+}
+
+export interface LineaOferta {
+    ocl_IdOferta: number | null;
+    ocl_idlinea: number | null;
+    ocl_revision: number | null;
+    occ_SerieOferta: number | null;
+    occ_revision: number | null;
+    occ_idempresa: number | null;
+    occ_añonum: number | null;
+    occ_numoferta: number;
+    occ_descrip: string | null;
+    occ_idestado: number | null;
+    occ_idproyecto: string | null;
+    cd_idcliente: string | null;
+    cd_Cliente: string | null;
+    ocl_IdArticulo: string | null;
+    ocl_Descrip: string | null;
+    ocl_Cantidad: number | null;
+    ocl_PesoNeto: number | null;
+    ocl_NumBultos: number | null;
+    ocl_UnidadesPres: number | null;
+    ppcl_IdParte: number | null;
+    ppcl_Capitulo: string | null; // Assuming it would be a string if not null
+    ppcl_IdArticulo: string | null; // Assuming it would be a string if not null
+    ppcl_DescripArticulo: string | null; // Assuming it would be a string if not null
+    ppcl_cantidad: number | null;
+    ppcl_UnidadMedida: string | null; // Assuming it would be a string if not null
+    ppcl_Certificado: number;
+    ppcc_observaciones: string | null;
+}
+
+export interface Cliente {
+    ocl_IdOferta: number
+    ocl_idLinea: number
+    ocl_Descrip: string
+    ocl_cantidad: number
+
+}
+
+export interface LineaEnviadaPost {
+    id: number
+    id_parte: number
+    id_oferta: number
+    descripcion: string
+    unidades_totales: number
+    medida: string
+    unidades_puestas_hoy: number
+    ya_certificado: number
+}
+
 export interface TeamManager {
     id: string
     name: string
@@ -51,15 +110,19 @@ export interface Proyecto {
 }
 
 export interface ParteData {
-    id: number
-    project: Proyecto;
-    parteDate: string;
-    teamManager: TeamManager;
-    actividades: Actividad[]
-    status: "active" | "pending" | "completed"
-    signature : string
-    comments: string
+    idOferta: number,
+    idParte: number,
+    pdf: any,
+    signature: string
+}
 
+export interface ParteEnviadoPost {
+    id_oferta: number,
+    id_parte: number,
+    // pdf: any,
+    signature: string,
+    lineas: LineaEnviadaPost[],
+    comentarios: string,
 }
 
 export interface ApiResponse<T> {
@@ -157,9 +220,19 @@ Error $
         });
     }
 
+    async getLineasOferta(idOferta: number, accessToken: string): Promise<ApiResponse<any[]>> {
+        return this.makeRequest(`/api/lineas/${idOferta}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+    }
+
+
     // Crear un nuevo parte
-    async createParte(parteData: ParteData, accessToken: string): Promise<ApiResponse<any>> {
-        console.log('parteData', parteData);
+    async createParte(parteData: ParteEnviadoPost, accessToken: string): Promise<ApiResponse<any>> {
+        console.log('parteData', JSON.stringify(parteData));
         return this.makeRequest('/api/partes', {
             method: 'POST',
             headers: {
@@ -179,6 +252,14 @@ Error $
         });
     }
 
+    async getOfertas(accessToken: string): Promise<ApiResponse<any[]>> {
+        return this.makeRequest('/api/ofertas', { // todo he cambiado esto, antes era ofertas
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+    }
 
     async getProyectos(accessToken: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/proyectos', {
@@ -206,19 +287,6 @@ Error $
             },
         });
     }
-
-    /*
-    async testConnection(): Promise<boolean> {
-        try {
-            const response = await this.makeRequest('/api/health', {
-                method: 'GET',
-            });
-            return response.success;
-        } catch {
-            return false;
-        }
-    }
-*/
 
     // Getter para obtener la URL base (útil para debugging)
     getBaseUrl(): string {

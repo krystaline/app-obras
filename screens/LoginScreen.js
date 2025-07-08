@@ -88,19 +88,19 @@ export default function LoginScreen() {
                 if (userData) {
                     console.log('User:', userData);
                     navigation.reset({
-                            index: 0,
-                            routes: [{
-                                name: "MainTab",
+                        index: 0,
+                        routes: [{
+                            name: "MainTab",
+                            params: {
+                                user: userData,
+                                accessToken: tokenResponse.accessToken,
+                                screen: "ListarPartes",
                                 params: {
-                                    user: userData,
-                                    accessToken: tokenResponse.accessToken,
-                                    screen: "ListarPartes",
-                                    params: {
-                                        user: userData, accessToken: tokenResponse.accessToken,
-                                    }
+                                    user: userData, accessToken: tokenResponse.accessToken,
                                 }
-                            }]
-                        })
+                            }
+                        }]
+                    })
                     setLoading(false);
                 }
             } else {
