@@ -1,5 +1,6 @@
 // services/apiService.ts
 import {Platform} from 'react-native';
+import {ApiResponse, ParteImprimirPDF} from "./types";
 
 // Configuración de la API
 const getBaseUrl = () => {
@@ -21,120 +22,9 @@ const getBaseUrl = () => {
 const API_BASE_URL = getBaseUrl();
 
 
-// Tipos TypeScript
-export interface Oferta {
-    idOferta: number,
-    fecha: Date
-    cliente: string
-    idProyecto: string
-    descripcion: string
-    observaciones: string
-    status: string
-}
-
-export interface LineaOferta {
-    ocl_IdOferta: number | null;
-    ocl_idlinea: number | null;
-    ocl_revision: number | null;
-    occ_SerieOferta: number | null;
-    occ_revision: number | null;
-    occ_idempresa: number | null;
-    occ_añonum: number | null;
-    occ_numoferta: number;
-    occ_descrip: string | null;
-    occ_idestado: number | null;
-    occ_idproyecto: string | null;
-    cd_idcliente: string | null;
-    cd_Cliente: string | null;
-    ocl_IdArticulo: string | null;
-    ocl_Descrip: string | null;
-    ocl_Cantidad: number | null;
-    ocl_PesoNeto: number | null;
-    ocl_NumBultos: number | null;
-    ocl_UnidadesPres: number | null;
-    ppcl_IdParte: number | null;
-    ppcl_Capitulo: string | null; // Assuming it would be a string if not null
-    ppcl_IdArticulo: string | null; // Assuming it would be a string if not null
-    ppcl_DescripArticulo: string | null; // Assuming it would be a string if not null
-    ppcl_cantidad: number | null;
-    ppcl_UnidadMedida: string | null; // Assuming it would be a string if not null
-    ppcl_Certificado: number;
-    ppcc_observaciones: string | null;
-}
-
-export interface Cliente {
-    ocl_IdOferta: number
-    ocl_idLinea: number
-    ocl_Descrip: string
-    ocl_cantidad: number
-
-}
-
-export interface LineaEnviadaPost {
-    id: number
-    id_parte: number
-    id_oferta: number
-    descripcion: string
-    unidades_totales: number
-    medida: string
-    unidades_puestas_hoy: number
-    ya_certificado: number
-}
-
-export interface TeamManager {
-    id: string
-    name: string
-}
-
-export interface Contact {
-    id: string
-    title: string
-    signature: string
-    phone: number
-}
-
-export interface Actividad {
-    id: number,
-    name: string,
-    cantidad: number,
-    unidad: string
-}
-
-export interface Proyecto {
-    id: string
-    title: string
-    contact: Contact
-    teamManager: TeamManager
-    createdAt: string
-
-}
-
-export interface ParteData {
-    idOferta: number,
-    idParte: number,
-    pdf: any,
-    signature: string
-}
-
-export interface ParteEnviadoPost {
-    id_oferta: number,
-    id_parte: number,
-    // pdf: any,
-    signature: string,
-    lineas: LineaEnviadaPost[],
-    comentarios: string,
-}
-
-export interface ApiResponse<T> {
-    success: boolean;
-    data?: T;
-    message?: string;
-    error?: string;
-}
-
 // Clase de servicio API
 class ApiService {
-    private baseUrl: string;
+    private readonly baseUrl: string;
 
     constructor() {
         this.baseUrl = API_BASE_URL;
@@ -170,16 +60,7 @@ class ApiService {
 
                 return {
                     success: false,
-                    error: `
-Error $
-{
-    response.status
-}
-: $
-{
-    response.statusText
-}
-`,
+                    error: `Error ${response.status}: ${response.statusText}`,
                     message: errorText || 'Error en la petición'
                 };
             }
@@ -211,6 +92,7 @@ Error $
         }
     }
 
+
     async getLastPartId(accessToken: string): Promise<ApiResponse<any>> {
         return this.makeRequest('/api/partes/lastId', {
             method: 'GET',
@@ -231,14 +113,23 @@ Error $
 
 
     // Crear un nuevo parte
-    async createParte(parteData: ParteEnviadoPost, accessToken: string): Promise<ApiResponse<any>> {
-        console.log('parteData', JSON.stringify(parteData));
+    async createParte(parteData: ParteImprimirPDF, accessToken: string): Promise<ApiResponse<any>> {
+        console.log('partepost', JSON.stringify(parteData));
         return this.makeRequest('/api/partes', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
             },
             body: JSON.stringify(parteData),
+        });
+    }
+
+    async imprimirPDF(parteId: string, accessToken: string): Promise<ApiResponse<any>> {
+        return this.makeRequest(`/api/pdf/${parteId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
         });
     }
 
@@ -279,12 +170,12 @@ Error $
         });
     }
 
-    async getParte(accessToken: string, id: number): Promise<ApiResponse<any>> {
-        return this.makeRequest(`/api/partes/${id}`, {
+    async getPartePdf(parteId: number, accessToken: string): Promise<ApiResponse<any>> {
+        return this.makeRequest(`/api/partes/parte/${parteId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
-            },
+            }
         });
     }
 

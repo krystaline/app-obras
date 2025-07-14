@@ -1,9 +1,10 @@
-import React, {useRef} from 'react';
-import {View, Text, StyleSheet, Button} from 'react-native';
+// SignaturePad.js
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, Button } from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 
 // Agregamos una prop `onDrawingStatusChange` para notificar al padre
-const SignaturePad = ({onSignatureSaved, onDrawingStatusChange}) => {
+const SignaturePad = ({ onSignatureSaved, onDrawingStatusChange }) => { // <--- Modificado
     const signatureRef = useRef(null);
 
     const handleSignature = (signature) => {
@@ -31,8 +32,8 @@ const SignaturePad = ({onSignatureSaved, onDrawingStatusChange}) => {
                 ref={signatureRef}
                 onOK={handleSignature}
                 // Nuevas props para controlar el estado del dibujo
-                onBegin={() => onDrawingStatusChange(true)} // Cuando el usuario empieza a dibujar
-                onEnd={() => onDrawingStatusChange(false)}   // Cuando el usuario deja de dibujar
+                onBegin={() => onDrawingStatusChange(false)} // Deshabilita el scroll
+                onEnd={() => onDrawingStatusChange(true)}   // Habilita el scroll
                 descriptionText="Firme aquí"
                 clearText="Limpiar"
                 confirmText="Guardar"
@@ -44,6 +45,7 @@ const SignaturePad = ({onSignatureSaved, onDrawingStatusChange}) => {
                 style={styles.signatureCanvas}
             />
             <View style={styles.signatureButtonsContainer}>
+                {/* Puedes quitar estos botones si solo quieres usar onOK */}
                 <Button title="Guardar Firma" onPress={handleSaveSignature}
                         color="#00CDB2"/>
                 <Button title="Limpiar Firma" onPress={handleClearSignature} color="#f44336"/>
@@ -72,8 +74,8 @@ const styles = StyleSheet.create({
     signatureButtonsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: 10,
+        width: '100%',
     },
 });
 
-export default SignaturePad;
+export default SignaturePad; // Asegúrate de exportarlo como default

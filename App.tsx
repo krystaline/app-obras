@@ -7,13 +7,12 @@ import {StackScreenProps} from '@react-navigation/stack'; // Asegúrate de impor
 // Importa tus pantallas
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
-import CreatePartScreen from './screens/CreatePartScreen'; // Tu nueva pantalla de creación (ahora .tsx)
 import MenuScreen from './screens/MenuScreen';
-import ParteInfoScreen from "./screens/InfoOfertasScreen";
-import {LineaOferta, Oferta, ParteData, Proyecto} from "./config/apiService";
+import {LineaOferta, Oferta, ParteData, ParteImprimirPDF, Proyecto} from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
-import CrearParteScreen from "./screens/CrearParteScreen"; // ¡La nueva pantalla para el menú!
+import CrearParteScreen from "./screens/CrearParteScreen";
+import ParteDetail from "./screens/ParteDetailScreen"; // ¡La nueva pantalla para el menú!
 
 // --- Definiciones de tipos ---
 // Parámetros para el Root Stack
@@ -33,7 +32,8 @@ export type MainTabParamList = {
     ListarPartes: { user: any; accessToken: string };
     CrearParte: { user: any; accessToken: string, lineas: LineaOferta[], oferta: Oferta, proyecto: string };
     InfoOferta: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
-    InfoLinea: { user: any; accessToken: string; linea: LineaOferta }
+    InfoLinea: { user: any; accessToken: string; linea: LineaOferta, idParte: number }
+    ParteDetail: { user: any; accessToken: string; parteId: number }
 };
 
 
@@ -69,9 +69,14 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                     />
                 )}
             </MainTabStack.Screen>
+
             <MainTabStack.Screen name="CrearParte">
                 {props => {
-                    const {lineas, oferta, proyecto } = props.route.params as {lineas: LineaOferta[], oferta: Oferta, proyecto: string}
+                    const {lineas, oferta, proyecto} = props.route.params as {
+                        lineas: LineaOferta[],
+                        oferta: Oferta,
+                        proyecto: string
+                    }
                     return (
 
                         <CrearParteScreen
@@ -89,6 +94,28 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                             }}
                         />
                     )
+                }}
+            </MainTabStack.Screen>
+            <MainTabStack.Screen name="ParteDetail">
+                {props => {
+                    // Extract parameters specific to ParteDetailScreen from props.route.params
+                    // According to ParteDetailScreen.tsx, it expects 'parteId', 'user', and 'accessToken'
+                    const { parteId, user, accessToken } = props.route.params as { parteId: number, user: any, accessToken: string };
+
+                    return (
+                        <ParteDetail
+                            {...props}
+                            route={{
+                                ...props.route,
+                                params: {
+                                    ...props.route.params, // Keep any other params that might be passed
+                                    parteId,
+                                    user,
+                                    accessToken,
+                                },
+                            }}
+                        />
+                    );
                 }}
             </MainTabStack.Screen>
             <MainTabStack.Screen name="InfoOferta">

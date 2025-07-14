@@ -1,30 +1,21 @@
 import React, {useState, useEffect} from 'react';
+import SignaturePad from "../components/SignaturePad";
+
 import {
-    View,
-    Text,
-    TextInput,
-    Button,
-    StyleSheet,
-    ScrollView,
-    Alert,
-    TouchableOpacity,
-    ActivityIndicator
+    View, Text, TextInput, Button, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator
 } from 'react-native';
 import {RouteProp} from '@react-navigation/native';
 import {StackNavigationProp, StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList} from "../App";
 import {
     apiService,
-    LineaEnviadaPost,
-    LineaOferta,
-    Oferta,
-    ParteEnviadoPost,
 } from "../config/apiService";
-import SignaturePad from "../components/SignaturePad";
+import {LineaOferta, LineaPartePost, LineaPedidoPDF, Oferta, ParteImprimirPDF} from "../config/types";
 
 
 // Define the type for the route prop
 type CrearParteScreenProps = StackScreenProps<MainTabParamList, 'CrearParte'>;
+
 
 export default function CrearParteScreen({route, navigation}: CrearParteScreenProps) {
     // Destructuring parameters passed from the previous screen
@@ -103,7 +94,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
             lineQuantities[linea.ocl_idlinea ? linea.ocl_idlinea : ""].trim() !== ""
         );
 
-        const lineasParaBackend: LineaEnviadaPost[] = [];
+        const lineasParaBackend: LineaPedidoPDF[] = [];
         for (const linea of lineasConCantidad) {
             const cantidadStr = lineQuantities[linea.ocl_idlinea!.toString()];
             const cantidadNum = parseInt(cantidadStr, 10);
@@ -119,33 +110,38 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
 
 
             lineasParaBackend.push({
-                id: linea.ocl_idlinea!,
+                id: parseInt(linea.ocl_idlinea!.toString()),
+                capitulo: 1,
+                idArticulo: linea.ocl_IdArticulo!,
                 id_parte: lastIdParte,
-                id_oferta: linea.ocl_IdOferta!,
-                descripcion: linea.ppcl_DescripArticulo || 'Sin Descripción',
-                unidades_totales: cantidadNum!!, // es esta?
+                id_oferta: parseInt(linea.ocl_IdOferta!.toString()),
+                descripcion: linea.ocl_Descrip || 'Sin Descripción',
+                unidades_totales: linea.ocl_UnidadesPres!, // es esta?
                 medida: "metros cambiar!!",
                 unidades_puestas_hoy: cantidadNum,
                 ya_certificado: 0,
             });
         }
 
-
-        const dataToSend: ParteEnviadoPost = {
-            id_oferta: oferta.idOferta,
-            id_parte: lastIdParte,
-            signature: signature,
-
+        // todo aqui tengo que crear el parte que se imprimirá (sin_nombre_app)
+        const dataToSend: ParteImprimirPDF = {
+            nParte: lastIdParte!,
+            proyecto: proyecto,
+            oferta: oferta.idOferta.toString(),
+            jefe_equipo: user['givenName'],
+            telefono: 'definir',
+            fecha: 'definir',
+            contacto_obra: oferta.cliente!,
+            comentarios: comments,
             lineas: lineasParaBackend,
-            comentarios: "",
+            idoferta: oferta.idOferta,
+            firma: signature,
+        }
 
-        };
 
         try {
-            console.log(dataToSend.lineas)
+            console.log(dataToSend)
             const response = await apiService.createParte(dataToSend, accessToken)
-
-
             if (response.success) {
                 Alert.alert('Éxito', 'Parte creado correctamente.');
                 navigation.goBack(); // Navigate back after the successful submission
@@ -175,7 +171,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 </Text>
                 {/* Displays the project contact */}
                 <Text style={styles.text}>
-                    <Text style={styles.boldText}>Fecha oferta:</Text> {parseDate(oferta.fecha) || 'N/A'}
+                    <Text style={styles.boldText}>Fecha oferta:</Text> {(oferta.fecha) || 'N/A'}
                 </Text>
 
             </View>
@@ -187,7 +183,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 <Text style={styles.sectionTitle}>Líneas a Introducir</Text>
                 {/* Maps through each line to create input fields */}
                 {lineas.map((linea) => {
-                        if (linea.ppcl_Certificado == 1) {
+                        if (linea.ppcl_IdParte) {
                             return null
                         } else return (
                             <View key={linea.ocl_idlinea} style={styles.lineItem}>

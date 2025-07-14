@@ -1,176 +1,199 @@
-// MenuScreen.tsx
+// MainScreen.tsx (No hay cambios funcionales significativos aquí por la limitación del backend)
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl, TextInput} from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    FlatList,
+    RefreshControl,
+    TextInput,
+    Alert,
+    ActivityIndicator
+} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList, RootStackParamList} from '../App';
 import {Ionicons} from "@expo/vector-icons";
-import {apiService, Oferta} from "../config/apiService"; // Importa tu RootStackParamList
+import {apiService} from "../config/apiService";
+import {Oferta} from "../config/types"; // Importa tu RootStackParamList
 
 type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartes'> & {
     navigation: StackScreenProps<RootStackParamList>['navigation']; // Para acceder al RootStack
 };
+
 export default function MainScreen({route, navigation}: MainScreenProps) {
     const {user, accessToken} = route.params;
 
-    const [data, setData] = useState<Oferta[]>()
-    const [refreshing, setRefreshing] = useState(false)
-    const [filteredData, setFilteredData] = useState<Oferta[]>([]);
+    const [ofertas, setOfertas] = useState<Oferta[]>([]);
+    const [refreshing, setRefreshing] = useState(false);
+    const [filteredOfertas, setFilteredOfertas] = useState<Oferta[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const onRefresh = React.useCallback(() => {
-        setRefreshing(true)
-        apiService.getOfertas(accessToken).then(response => {
-            console.log("Ofertas: ", response.data)
-            setData(response.data)
-        })
-        setTimeout(() => {
-            setRefreshing(false)
-        }, 1000)
-    }, [])
+    const [loading, setLoading] = useState(true);
+
+    const fetchOfertas = React.useCallback(async () => {
+        setRefreshing(true);
+        setLoading(true);
+        const response = await apiService.getOfertas(accessToken);
+        if (response.success && response.data) {
+            setOfertas(response.data);
+            setFilteredOfertas(response.data);
+        } else {
+            Alert.alert("Error", response.error || "No se pudieron cargar las ofertas.");
+        }
+        setRefreshing(false);
+        setLoading(false);
+    }, [accessToken]);
+
+    React.useEffect(() => {
+        fetchOfertas();
+    }, [fetchOfertas]);
 
     React.useEffect(() => {
         if (searchQuery) {
-            const lowercasedQuery = searchQuery.toLowerCase();
-            const newFilteredData = data?.filter(item => {
-                // Add checks for null/undefined before calling toLowerCase()
-                const description = item.descripcion || ''; // Use empty string if null/undefined
-                const idProyecto = item.idProyecto || '';   // Use empty string if null/undefined
-
-                return (
-                    description.toLowerCase().includes(lowercasedQuery) ||
-                    idProyecto.toLowerCase().includes(lowercasedQuery)
-                );
-            });
-            setFilteredData(newFilteredData!!);
+            const filtered = ofertas.filter(oferta =>
+                oferta.descripcion?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                String(oferta.idOferta).includes(searchQuery) ||
+                oferta.idProyecto?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                oferta.cliente?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setFilteredOfertas(filtered);
         } else {
-            setFilteredData(data!!); // If search query is empty, show all data
+            setFilteredOfertas(ofertas);
         }
-    }, [searchQuery, data]);// Dependencies: re-run when searchQuery or data changes
+    }, [searchQuery, ofertas]);
 
+    // Esta función maneja la navegación a la pantalla de detalle de oferta, no de parte
+    const handleSelectOferta = (oferta: Oferta) => {
+        // Podrías navegar a una pantalla de detalles de oferta si la tienes
+        // o usar esta pantalla para seleccionar un parte existente si tuvieras la lista de partes.
+        // Por ahora, solo es un marcador.
+        navigation.navigate('InfoOferta', {
+            idOferta: oferta.idOferta,
+            accessToken: accessToken,
+            user: user,
+            oferta: oferta
+        })
+        //
+        //Si tuvieras una lista de Partes aquí, podrías navegar a ParteDetailScreen.
+        //Por ahora, puedes ir a 'Todas las Líneas' para crear un parte nuevo.`);
+    };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "activa":
-                return "#10b981"
-            case "pending":
-                return "#f59e0b"
-            case "completada":
-                return "#6366f1"
-            default:
-                return "#64748b"
-        }
-    }
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "activa":
-                return "play-circle"
-            case "pending":
-                return "time"
-            case "completada":
-                return "checkmark-circle"
-            default:
-                return "help-circle"
-        }
-    }
-
-
-    const renderItem = ({item}: { item: Oferta }) => (
-        <TouchableOpacity style={styles.itemContainer}
-                          onPress={() =>
-                              navigation.navigate('InfoOferta', {
-                                  idOferta: item.idOferta,
-                                  accessToken: accessToken,
-                                  user: user,
-                                  oferta: item
-                              })}
-        >
-            <View style={styles.itemHeader}>
-
-                <Text style={styles.itemTitle}>{item.idProyecto} - {item.descripcion} </Text>
-
-                <View style={[styles.statusBadge, {backgroundColor: getStatusColor(item.status)}]}>
-                    <Ionicons name={getStatusIcon(item.status) as any} size={12} color="white"
-                              style={styles.statusIcon}/>
-                    <Text style={styles.statusText}>{item.status}</Text>
-                </View>
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#007bff"/>
+                <Text style={styles.loadingText}>Cargando ofertas...</Text>
             </View>
-
-        </TouchableOpacity>
-    )
+        );
+    }
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                {/* Botón para abrir el Menú */}
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('Menu', {user, accessToken})}
-                    style={styles.menuButton}
-                >
-                    <Ionicons name="menu" size={30} color="#1e293b"/>
+                <Text style={styles.headerTitle}>Hola, {user.displayName}</Text>
+                <Text style={styles.headerSubtitle}>Tus ofertas y partes recientes</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
+                                  style={styles.menuButton}>
+                    <Ionicons name="menu" size={30} color="#fff"/>
                 </TouchableOpacity>
-                <View>
-                    <Text style={styles.headerTitle}>Lista de Ofertas</Text>
-                    <TextInput
-                        style={styles.searchBar}
-                        placeholder="Buscar por nombre o ID de proyecto..."
-                        placeholderTextColor="#94a3b8"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery} // Update searchQuery state on text change
-                    />
-                </View>
             </View>
-
+            <TextInput
+                style={styles.searchBar}
+                placeholder="Buscar ofertas..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+            />
             <FlatList
-                data={filteredData}
-                renderItem={renderItem}
-                keyExtractor={item => item.idOferta.toString()}
+                data={filteredOfertas}
+                keyExtractor={(item) => String(item.idOferta)}
+                renderItem={({item}) => (
+                    <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectOferta(item)}>
+                        <View style={styles.itemHeader}>
+                            <Text style={styles.itemTitle}>{item.descripcion}</Text>
+                            <View
+                                style={[styles.statusBadge, item.status === 'activa' ? styles.statusActive : styles.statusInactive]}>
+                                <Text style={styles.statusText}>{item.status}</Text>
+                            </View>
+                        </View>
+                        <Text style={styles.itemDetails}>ID Oferta: {item.idOferta} | Proyecto: {item.idProyecto}</Text>
+                        <Text style={styles.itemDetails}>Cliente: {item.cliente || 'N/A'}</Text>
+                        <Text style={styles.itemDetails}>Fecha: {item.fecha}</Text>
+                    </TouchableOpacity>
+                )}
                 contentContainerStyle={styles.listContainer}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
-                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={fetchOfertas} colors={["#00ffa6"]}/>
+                }
+                ListEmptyComponent={() => (
+                    <View style={styles.emptyListContainer}>
+                        <Text style={styles.emptyListText}>No hay ofertas disponibles.</Text>
+                        <TouchableOpacity onPress={fetchOfertas} style={styles.refreshButton}>
+                            <Text style={styles.refreshButtonText}>Recargar</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             />
         </View>
     );
-
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f8fafc",
+        backgroundColor: '#f0f4f7',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f0f4f7',
+    },
+    loadingText: {
+        marginTop: 10,
+        fontSize: 16,
+        color: '#666',
     },
     header: {
-        padding: 20,
-        backgroundColor: "white",
-        borderBottomWidth: 1,
-        borderBottomColor: "#e2e8f0",
-    },
-    searchBar: { // New style for the search input
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        fontSize: 16,
-        color: '#1e293b',
-        marginTop: 10, // Space between title and search bar
-        backgroundColor: '#f1f5f9',
-    },
-    menuButton: {
-        position: "absolute",
-        marginTop: 32,
-        right: 22,
-        top: 40,
-        transform: 'scale(1.4)',
+        backgroundColor: '#5BBDB3',
+        paddingHorizontal: 16,
+        paddingBottom: 75,
+        paddingTop: 80,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+        alignItems: 'center',
+        position: 'relative',
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: "bold",
-        color: "#1e293b",
+        color: "#ffffff",
         marginBottom: 4,
-        marginTop: 70,
     },
     headerSubtitle: {
         fontSize: 16,
-        color: "#64748b",
+        color: "#e0e0e0",
+    },
+    menuButton: {
+        position: 'absolute',
+        top: 45,
+        right: 20,
+        padding: 5,
+    },
+    searchBar: {
+        height: 45,
+        borderColor: '#ddd',
+        borderWidth: 1,
+        borderRadius: 25,
+        paddingHorizontal: 15,
+        marginHorizontal: 10,
+        marginTop: -55, // Superpone al header
+        marginBottom: 15,
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 1,
+        elevation: 2,
     },
     listContainer: {
         padding: 16,
@@ -181,10 +204,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 12,
         shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,
@@ -202,31 +222,47 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     statusBadge: {
-        left: 8,
         flexDirection: "row",
         alignItems: "center",
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
     },
-    statusIcon: {
-        marginRight: 4,
-    },
     statusText: {
-        color: "white",
         fontSize: 12,
-        fontWeight: "500",
-        textTransform: "capitalize",
+        fontWeight: "bold",
+        color: "#fff",
     },
-    itemDescription: {
+    statusActive: {
+        backgroundColor: '#28a745',
+    },
+    statusInactive: {
+        backgroundColor: '#dc3545',
+    },
+    itemDetails: {
         fontSize: 14,
-        color: "#3b4955",
-        marginTop: 8,
-        marginBottom: 8,
-        lineHeight: 20,
+        color: "#64748b",
+        marginBottom: 4,
     },
-    itemDate: {
-        fontSize: 12,
-        color: "#94a3b8",
+    emptyListContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 50,
     },
-})
+    emptyListText: {
+        fontSize: 16,
+        color: '#888',
+        marginBottom: 10,
+    },
+    refreshButton: {
+        backgroundColor: '#5BBDB3',
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+    },
+    refreshButtonText: {
+        color: '#fff',
+        fontSize: 16,
+    },
+});

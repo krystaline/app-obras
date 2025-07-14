@@ -2,9 +2,10 @@
 import {Alert, Button, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {StackScreenProps} from "@react-navigation/stack";
 import {MainTabParamList} from "../App";
-import {apiService, LineaOferta, Oferta} from "../config/apiService";
+import {apiService} from "../config/apiService";
 import React, {useState} from "react";
 import {Ionicons} from "@expo/vector-icons";
+import {LineaOferta, Oferta} from "../config/types";
 
 
 type InfoOfertaProps = StackScreenProps<MainTabParamList, 'InfoOferta'>; // Removed `parte: ParteData` from here
@@ -15,6 +16,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
     const [lineas, setLineas] = useState<LineaOferta[]>()
     const [loading, setLoading] = useState(true)
     const {oferta} = route.params as { oferta: Oferta }
+
     React.useEffect(() => {
         apiService.getLineasOferta(idOferta, accessToken).then(response => {
             setLineas(response.data);
@@ -61,7 +63,6 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
 
                 <Text style={styles.label}>Cliente:
                     <Text style={styles.value}> {oferta.cliente}
-                        {/* TODO METER CONTACTO DEL CLIENTE AQUI */}
                     </Text>
                 </Text>
 
@@ -85,32 +86,43 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                         accessToken: accessToken,
                         oferta: oferta,
                         lineas: lineas,
-                        proyecto: oferta.descripcion,
+                        proyecto: oferta.descripcion ? oferta.descripcion : "",
                     })}><Text>➕ Crear Parte</Text></TouchableOpacity>
-                {/* TODO hacer entero (listar las lineas agrupadas por parte) */}
                 {lineas && lineas.length > 0 ? (
                     // Map over the sorted idPartes
                     idPartes.map((idParte) => (
-                        <View key={idParte}>
+                        <TouchableOpacity key={idParte} onPress={() => {
+                            navigation.navigate('ParteDetail', {
+                                user: user, accessToken: accessToken, parteId: idParte
+                            })
+                        }}>
+
                             {/* Title for the group */}
                             <Text
                                 style={styles.groupTitle}>{idParte ? "Grupo parte: " + idParte + "" : "Líneas sin parte"}</Text>
                             {/* Map over the lineas within this idParte group */}
                             {groupedLineas[idParte].map((linea: LineaOferta) => (
                                 <TouchableOpacity
-                                    key={linea.ocl_IdArticulo} // Use a unique key for each linea
-                                    onPress={() => navigation.navigate("InfoLinea", {user, accessToken, linea})}>
+                                    key={linea.ocl_idlinea} // Use a unique key for each linea
+                                    onPress={() => navigation.navigate("InfoLinea", {
+                                        user,
+                                        accessToken,
+                                        linea,
+                                        idParte
+                                    })}>
                                     <View
                                         style={linea.ppcl_Certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
                                         <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
                                         <Text
-                                            style={styles.activityText}>Cantidad: {linea.ocl_UnidadesPres} {linea.ppcl_UnidadMedida}</Text>
+                                            style={styles.activityText}>Cantidad
+                                            (realizado/ofertado): {linea.ppcl_UnidadMedida} / {linea.ocl_UnidadesPres}</Text>
+                                        {/*UNIDAD MEDIDA ES LO QUE SE HA HECHO, unidadespres lo que se ha ofertado*/}
                                         <Text
                                             style={styles.activityText}>Certificado: {linea.ppcl_Certificado > 0 ? "Sí" : "No"}</Text>
                                     </View>
                                 </TouchableOpacity>
                             ))}
-                        </View>
+                        </TouchableOpacity>
                     ))
                 ) : (
                     <Text style={styles.value}>No hay lineas registradas.</Text>
@@ -141,10 +153,11 @@ const styles = StyleSheet.create({
         marginTop: 15,
         marginBottom: 10,
         paddingHorizontal: 10,
-        backgroundColor: '#e0e0e0', // Light background for group titles
-        paddingVertical: 5,
+        backgroundColor: '#ececec', // Light background for group titles
+        paddingVertical: 10,
         borderRadius: 5,
     },
+
     title: {
         fontSize: 28,
         fontWeight: 'bold',
@@ -228,12 +241,12 @@ const styles = StyleSheet.create({
         borderLeftColor: '#5BBDB3',
     },
     activityCardNoCert: {
-        backgroundColor: '#d8d8d8',
+        backgroundColor: '#dddddd',
         padding: 10,
         borderRadius: 8,
         marginBottom: 8,
         borderLeftWidth: 4,
-        borderLeftColor: '#fa3636',
+        borderLeftColor: '#fad44f',
     },
     activityText: {
         fontSize: 15,

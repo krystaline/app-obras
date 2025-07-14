@@ -1,8 +1,21 @@
+// InfoOfertasScreen.tsx
+import {
+    Alert,
+    Button,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ActivityIndicator,
+    TextInput
+} from "react-native";
 import {StackScreenProps} from "@react-navigation/stack";
 import {MainTabParamList} from "../App";
-import React, {useState} from "react";
-import {LineaOferta} from "../config/apiService";
-import {ScrollView, StyleSheet, Text, View} from "react-native";
+import {apiService} from "../config/apiService";
+import React, {useState, useEffect} from "react";
+import {Ionicons} from "@expo/vector-icons";
+import {LineaOferta, LineaOfertaResponse, LineaPartePost, Oferta} from "../config/types";
 
 type InfoLineaProps = StackScreenProps<MainTabParamList, 'InfoLinea'>;
 export default function InfoLinea({route, navigation}: InfoLineaProps) {
