@@ -28,50 +28,6 @@ export interface LineaOferta {
     ppcc_observaciones: string | null;
 }
 
-export interface Cliente {
-    ocl_IdOferta: number
-    ocl_idLinea: number
-    ocl_Descrip: string
-    ocl_cantidad: number
-
-}
-
-
-export interface TeamManager {
-    id: string
-    name: string
-}
-
-export interface Contact {
-    id: string
-    title: string
-    signature: string
-    phone: number
-}
-
-export interface Actividad {
-    id: number,
-    name: string,
-    cantidad: number,
-    unidad: string
-}
-
-export interface Proyecto {
-    id: string
-    title: string
-    contact: Contact
-    teamManager: TeamManager
-    createdAt: string
-
-}
-
-export interface ParteData {
-    idOferta: number,
-    idParte: number,
-    pdf: any,
-    signature: string
-}
-
 export interface LineaPedidoPDF {
     id: number;
     capitulo: number;
@@ -97,6 +53,9 @@ export interface ParteImprimirPDF {
     lineas: LineaPedidoPDF[]; // O LineaPedidoPost[] si es lo que envías
     firma: string; // Base64
     idoferta: number;
+
+    pdf: string | null;
+
 }
 
 
@@ -148,23 +107,10 @@ export interface LineaPartePost {
 export interface LineaPartePDF {
     id: number; // ID de la línea del parte
     DescripArticulo: string; // Descripción de la línea
-    unidades_puestas_hoy: number; // Unidades puestas en el parte
-    medida: string; // Unidad de medida (ej: "m", "kg", "unidades")
+    cantidad: number; // Unidades puestas en el parte
+    UnidadMedida: string; // Unidad de medida (ej: "m", "kg", "unidades")
 }
 
-// Para el objeto Parte completo que se envía al backend para crear/actualizar
-export interface PartePostData {
-    nParte: number;
-    oferta: string; // Descripción de la oferta
-    idOferta: number; // ID de la oferta
-    proyecto: string; // ID del proyecto
-    jefe_equipo: string;
-    telefono: string;
-    contacto_obra: string;
-    comentarios: string | null;
-    firma: string; // Base64 de la firma
-    lineas: LineaPartePost[]; // Arreglo de líneas de parte
-}
 
 // Para el objeto Parte completo que se recibe del backend al pedir un PDF existente
 export interface ParteResponsePDF {
@@ -179,6 +125,7 @@ export interface ParteResponsePDF {
     comentarios: string | null;
     firma: string; // Base64 de la firma
     lineas: LineaPartePDF[];
+    pdf: string | null;
 }
 
 // Para las ofertas

@@ -4,7 +4,7 @@ import {View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableO
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList} from '../App';
 import {apiService} from '../config/apiService';
-import {LineaPartePDF, ParteResponsePDF} from "../config/types";
+import {LineaPartePDF, LineaPartePost, ParteResponsePDF} from "../config/types";
 import {Ionicons} from "@expo/vector-icons";
 
 type ParteDetailScreenProps = StackScreenProps<MainTabParamList, 'ParteDetail'>;
@@ -85,7 +85,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
                     parteDetails.lineas.map((linea: LineaPartePDF, index: number) => (
                         <View key={linea.id || index} style={styles.lineItem}>
                             <Text style={styles.lineDesc}>{linea.DescripArticulo}</Text>
-                            <Text style={styles.lineQuantity}>{linea.unidades_puestas_hoy} {linea.medida}</Text>
+                            <Text style={styles.lineQuantity}>{linea.cantidad} {linea.UnidadMedida}</Text>
                         </View>
                     ))
                 )}

@@ -2,13 +2,9 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as Crypto from 'expo-crypto';
+import {msalConfig} from "./AuthConfig";
 
 // Configuración de Microsoft Azure AD
-const config = {
-    clientId: '7562f532-b3df-4051-841b-a5c6bbf51300',
-    tenantId: 'd0fbdbb8-b41b-4c4a-af4a-1ef369dcccaa', // o 'common' para cuentas personales y trabajo
-    scopes: ['openid', 'profile', 'email', 'User.Read'],
-};
 
 // Para desarrollo en Expo
 WebBrowser.maybeCompleteAuthSession();
@@ -29,7 +25,7 @@ class AuthService {
             );
 
             // Configurar la URL de autorización
-            const authUrl = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/authorize`;
+            const authUrl = `https://login.microsoftonline.com/${msalConfig.TENANT_ID}/oauth2/v2.0/authorize`;
 
             const redirectUri = AuthSession.makeRedirectUri({
                 useProxy: true, // Usar proxy de Expo para desarrollo
@@ -39,8 +35,8 @@ class AuthService {
 
             // Configurar la sesión de autenticación
             const request = new AuthSession.AuthRequest({
-                clientId: config.clientId,
-                scopes: config.scopes,
+                clientId: msalConfig.CLIENT_ID,
+                scopes: msalConfig.scopes,
                 responseType: AuthSession.ResponseType.Code,
                 redirectUri: redirectUri,
                 codeChallenge: codeChallenge,
@@ -80,10 +76,10 @@ class AuthService {
     }
 
     async exchangeCodeForToken(code, redirectUri, codeVerifier) {
-        const tokenUrl = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/token`;
+        const tokenUrl = `https://login.microsoftonline.com/${msalConfig.TENANT_ID}/oauth2/v2.0/token`;
 
         const body = new URLSearchParams({
-            client_id: config.clientId,
+            client_id: msalConfig.CLIENT_ID,
             code: code,
             redirect_uri: redirectUri,
             grant_type: 'authorization_code',
@@ -131,7 +127,7 @@ class AuthService {
         this.accessToken = null;
 
         // Opcional: Cerrar sesión en Microsoft también
-        const logoutUrl = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/logout`;
+        const logoutUrl = `https://login.microsoftonline.com/${msalConfig.TENANT_ID}/oauth2/v2.0/logout`;
         await WebBrowser.openBrowserAsync(logoutUrl);
 
         return true;

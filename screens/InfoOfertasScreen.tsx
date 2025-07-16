@@ -1,9 +1,9 @@
 // InfoOfertasScreen.tsx
-import {Alert, Button, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {Alert, Button, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {StackScreenProps} from "@react-navigation/stack";
 import {MainTabParamList} from "../App";
 import {apiService} from "../config/apiService";
-import React, {useState} from "react";
+import React, {useCallback, useState} from "react";
 import {Ionicons} from "@expo/vector-icons";
 import {LineaOferta, Oferta} from "../config/types";
 
@@ -16,18 +16,31 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
     const [lineas, setLineas] = useState<LineaOferta[]>()
     const [loading, setLoading] = useState(true)
     const {oferta} = route.params as { oferta: Oferta }
+    const [refreshing, setRefreshing] = useState(false)
 
-    React.useEffect(() => {
+
+    const fetchLineasOferta = useCallback(() => {
+        setRefreshing(true); // Inicia el estado de refrescando
         apiService.getLineasOferta(idOferta, accessToken).then(response => {
             setLineas(response.data);
         }).catch(error => {
             console.error("Error fetching projects:", error);
+            Alert.alert("Error", "No se pudieron cargar las líneas de la oferta."); // Opcional: mostrar un error al usuario
         }).finally(() => {
             setLoading(false);
+            setRefreshing(false); // Finaliza el estado de refrescando
         });
-    }, [idOferta, accessToken])
+    }, [idOferta, accessToken]); // Dependencias para useCallback
 
-    if (!lineas) {
+    React.useEffect(() => {
+        fetchLineasOferta(); // Llama a la función al montar el componente
+    }, [fetchLineasOferta]); // Dependencia para useEffect
+
+    const onRefresh = useCallback(() => {
+        fetchLineasOferta(); // Llama a la misma función para refrescar
+    }, [fetchLineasOferta]);
+
+    if (!lineas && !loading) { // Cambia la condición para mostrar el error solo si no hay líneas y no está cargando
         return (
             <View style={styles.container}>
                 <Text style={styles.errorText}>No se han proporcionado datos del parte.</Text>
@@ -49,11 +62,21 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
             return acc;
         }, {});
     };
-    const groupedLineas = groupLineasByIdParte(lineas);
+    const groupedLineas = lineas ? groupLineasByIdParte(lineas) : {}; // Asegúrate de que lineas no sea undefined    const idPartes = Object.keys(groupedLineas).map(Number).sort((a, b) => a - b); // Get and sort unique idPartes
     const idPartes = Object.keys(groupedLineas).map(Number).sort((a, b) => a - b); // Get and sort unique idPartes
+
     // let imgSource = {uri: oferta.signature}
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={styles.container}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#3EB1A5']} // Color del spinner en Android
+                            tintColor={'#3EB1A5'} // Color del spinner en iOS
+                        />
+                    }
+        >
             <Text style={styles.title}>Detalles de la oferta</Text>
             <Ionicons style={styles.arrowBack} name={"arrow-back"} onPress={navigation.goBack}></Ionicons>
             <View style={styles.card}>
@@ -85,7 +108,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                         user: user,
                         accessToken: accessToken,
                         oferta: oferta,
-                        lineas: lineas,
+                        lineas: lineas!,
                         proyecto: oferta.descripcion ? oferta.descripcion : "",
                     })}><Text>➕ Crear Parte</Text></TouchableOpacity>
                 {lineas && lineas.length > 0 ? (
@@ -115,8 +138,9 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                                         <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
                                         <Text
                                             style={styles.activityText}>Cantidad
-                                            (realizado/ofertado): {linea.ppcl_UnidadMedida} / {linea.ocl_UnidadesPres}</Text>
+                                            (realizado/ofertado): {linea.ppcl_cantidad} / {linea.ocl_UnidadesPres}</Text>
                                         {/*UNIDAD MEDIDA ES LO QUE SE HA HECHO, unidadespres lo que se ha ofertado*/}
+                                        <Text style={styles.activityText}>ID Actividad: {linea.ocl_IdArticulo}</Text>
                                         <Text
                                             style={styles.activityText}>Certificado: {linea.ppcl_Certificado > 0 ? "Sí" : "No"}</Text>
                                     </View>

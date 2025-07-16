@@ -117,7 +117,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 id_oferta: parseInt(linea.ocl_IdOferta!.toString()),
                 descripcion: linea.ocl_Descrip || 'Sin Descripción',
                 unidades_totales: linea.ocl_UnidadesPres!, // es esta?
-                medida: "metros cambiar!!",
+                medida: "uds.", //linea.ppcl_UnidadMedida?.toString()!,
                 unidades_puestas_hoy: cantidadNum,
                 ya_certificado: 0,
             });
@@ -129,13 +129,14 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
             proyecto: proyecto,
             oferta: oferta.idOferta.toString(),
             jefe_equipo: user['givenName'],
-            telefono: 'definir',
-            fecha: 'definir',
+            telefono: "",
+            fecha: new Date().toISOString().slice(0, 10),
             contacto_obra: oferta.cliente!,
             comentarios: comments,
             lineas: lineasParaBackend,
             idoferta: oferta.idOferta,
             firma: signature,
+            pdf: null
         }
 
 

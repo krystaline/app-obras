@@ -11,17 +11,11 @@ import {
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import {useNavigation} from "@react-navigation/native";
+import {msalConfig} from "../auth/AuthConfig";
 
 const redirectUri = AuthSession.makeRedirectUri({
     scheme: 'appobras'
 });
-
-
-// CONFIGURACIÓN DE AZURE AD
-const AZURE_AD_CLIENT_ID = '7562f532-b3df-4051-841b-a5c6bbf51300'; // TU_CLIENT_ID_DE_AZURE_AD
-const AZURE_AD_TENANT_ID = 'd0fbdbb8-b41b-4c4a-af4a-1ef369dcccaa'; // TU_TENANT_ID_DE_AZURE_AD (o 'common' para multitenant/cuentas personales)
-const AZURE_AD_AUTHORIZATION_ENDPOINT = `https://login.microsoftonline.com/${AZURE_AD_TENANT_ID || 'common'}/oauth2/v2.0/authorize`;
-const AZURE_AD_TOKEN_ENDPOINT = `https://login.microsoftonline.com/${AZURE_AD_TENANT_ID || 'common'}/oauth2/v2.0/token`;
 
 
 WebBrowser.maybeCompleteAuthSession(); // Es importante para iOS para manejar el cierre del navegador
@@ -36,14 +30,14 @@ export default function LoginScreen() {
 
     // Configuración de autenticación
     const discovery = {
-        authorizationEndpoint: AZURE_AD_AUTHORIZATION_ENDPOINT,
-        tokenEndpoint: AZURE_AD_TOKEN_ENDPOINT,
+        authorizationEndpoint: msalConfig.discovery.authorizationEndpoint,
+        tokenEndpoint: msalConfig.discovery.tokenEndpoint,
     };
 
 
     const [request, response, promptAsync] = AuthSession.useAuthRequest(
         {
-            clientId: AZURE_AD_CLIENT_ID,
+            clientId: msalConfig.CLIENT_ID,
             scopes: ['openid', 'profile', 'email', 'User.Read'],
             responseType: AuthSession.ResponseType.Code,
             redirectUri,
@@ -74,11 +68,11 @@ export default function LoginScreen() {
         try {
             const tokenResponse = await AuthSession.exchangeCodeAsync(
                 {
-                    clientId: AZURE_AD_CLIENT_ID,
+                    clientId: msalConfig.CLIENT_ID,
                     code, redirectUri
                 },
                 {
-                    tokenEndpoint: AZURE_AD_TOKEN_ENDPOINT,
+                    tokenEndpoint: msalConfig.discovery.tokenEndpoint,
                 }
             )
 

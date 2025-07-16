@@ -8,7 +8,7 @@ import {StackScreenProps} from '@react-navigation/stack'; // Asegúrate de impor
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
 import MenuScreen from './screens/MenuScreen';
-import {LineaOferta, Oferta, ParteData, ParteImprimirPDF, Proyecto} from "./config/types";
+import {LineaOferta, Oferta} from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
 import CrearParteScreen from "./screens/CrearParteScreen";
@@ -100,7 +100,11 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                 {props => {
                     // Extract parameters specific to ParteDetailScreen from props.route.params
                     // According to ParteDetailScreen.tsx, it expects 'parteId', 'user', and 'accessToken'
-                    const { parteId, user, accessToken } = props.route.params as { parteId: number, user: any, accessToken: string };
+                    const {parteId, user, accessToken} = props.route.params as {
+                        parteId: number,
+                        user: any,
+                        accessToken: string
+                    };
 
                     return (
                         <ParteDetail
