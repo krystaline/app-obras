@@ -15,14 +15,18 @@
     "scheme": "appobras",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.krystaline.appobras"
+      "bundleIdentifier": "com.krystaline.appobras",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.krystaline.appobras"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,6 +34,11 @@
     "plugins": [
       "expo-web-browser",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fd907a65-75ce-4dd7-8dd7-e8cadb0d58bf"
+      }
+    }
   }
 }

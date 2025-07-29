@@ -1,17 +1,22 @@
 {
   "cli": {
     "version": ">= 16.16.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "remote",
+    "requireCommit": true
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal"
     },
-    "preview": {
+    "dist": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+
       }
     },
     "production": {
