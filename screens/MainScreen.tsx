@@ -117,7 +117,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
                         </View>
                         <Text style={styles.itemDetails}>ID Oferta: {item.idOferta} | Proyecto: {item.idProyecto}</Text>
                         <Text style={styles.itemDetails}>Cliente: {item.cliente || 'N/A'}</Text>
-                        <Text style={styles.itemDetails}>Fecha: {item.fecha}</Text>
+                        <Text style={styles.itemDetails}>Fecha: {item.fecha?.substring(0, 10)}</Text>
                     </TouchableOpacity>
                 )}
                 contentContainerStyle={styles.listContainer}

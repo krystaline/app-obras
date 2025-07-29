@@ -76,11 +76,11 @@ export default function LoginScreen() {
                 }
             )
 
-            console.log('Token:', tokenResponse);
+            // console.log('Token:', tokenResponse);
             if (tokenResponse.accessToken) {
                 const userData = await fetchUserProfile(tokenResponse.accessToken);
                 if (userData) {
-                    console.log('User:', userData);
+                    // console.log('User:', userData);
                     navigation.reset({
                         index: 0,
                         routes: [{
@@ -117,7 +117,7 @@ export default function LoginScreen() {
             })
             const userData = await userResponse.json();
             setUser(userData);
-            console.log('User:', userData);
+            // console.log('User:', userData);
             return userData;
         } catch (error) {
             console.error('Error:', error);

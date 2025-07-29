@@ -12,7 +12,9 @@ import {LineaOferta, Oferta} from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
 import CrearParteScreen from "./screens/CrearParteScreen";
-import ParteDetail from "./screens/ParteDetailScreen"; // ¡La nueva pantalla para el menú!
+import ParteDetail from "./screens/ParteDetailScreen"; 
+import {Text} from "react-native";
+import AsignarTrabajadoresScreen from "./screens/AsignarTrabajadoresScreen"; // ¡La nueva pantalla para el menú!
 
 // --- Definiciones de tipos ---
 // Parámetros para el Root Stack
@@ -33,13 +35,13 @@ export type MainTabParamList = {
     CrearParte: { user: any; accessToken: string, lineas: LineaOferta[], oferta: Oferta, proyecto: string };
     InfoOferta: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
     InfoLinea: { user: any; accessToken: string; linea: LineaOferta, idParte: number }
-    ParteDetail: { user: any; accessToken: string; parteId: number }
-};
+    ParteDetail: { user: any; accessToken: string; parteId: number };
+    AsignarTrabajadoresScreen: { user: any; accessToken: string; parteId: number };
 
+}
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const MainTabStack = createNativeStackNavigator<MainTabParamList>();
-
 type MainTabNavigatorProps = StackScreenProps<RootStackParamList, 'MainTab'>;
 
 function MainTabNavigator({route}: MainTabNavigatorProps) {
@@ -156,6 +158,27 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                         />
                     )
                 }}
+            </MainTabStack.Screen>
+            <MainTabStack.Screen name="AsignarTrabajadoresScreen">
+                {props => {
+                    const {parteId} = props.route.params as { parteId: number }; // Assert the type to access 'parte'
+
+                    return (
+                        <AsignarTrabajadoresScreen
+                            {...props}
+                            route={{
+                                ...props.route,
+                                params: {
+                                    ...props.route.params,
+                                    user,
+                                    accessToken,
+                                    parteId
+                                },
+                            }}
+                        />
+                    )
+                }}
+
             </MainTabStack.Screen>
         </MainTabStack.Navigator>
     );

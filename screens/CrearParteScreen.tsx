@@ -10,7 +10,7 @@ import {MainTabParamList} from "../App";
 import {
     apiService,
 } from "../config/apiService";
-import {LineaOferta, LineaPartePost, LineaPedidoPDF, Oferta, ParteImprimirPDF} from "../config/types";
+import {LineaOferta, LineaPedidoPDF, Oferta, ParteImprimirPDF} from "../config/types";
 
 
 // Define the type for the route prop
@@ -95,6 +95,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
         );
 
         const lineasParaBackend: LineaPedidoPDF[] = [];
+        console.log(user)
         for (const linea of lineasConCantidad) {
             const cantidadStr = lineQuantities[linea.ocl_idlinea!.toString()];
             const cantidadNum = parseInt(cantidadStr, 10);
@@ -117,9 +118,10 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 id_oferta: parseInt(linea.ocl_IdOferta!.toString()),
                 descripcion: linea.ocl_Descrip || 'Sin Descripción',
                 unidades_totales: linea.ocl_UnidadesPres!, // es esta?
-                medida: "uds.", //linea.ppcl_UnidadMedida?.toString()!,
+                medida: linea.ocl_tipoUnidad ? linea.ocl_tipoUnidad : "uds.", //linea.ppcl_UnidadMedida?.toString()!,
                 unidades_puestas_hoy: cantidadNum,
                 ya_certificado: 0,
+                cantidad: linea.ppcl_cantidad ? linea.ppcl_cantidad : 0,
             });
         }
 
@@ -128,8 +130,8 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
             nParte: lastIdParte!,
             proyecto: proyecto,
             oferta: oferta.idOferta.toString(),
-            jefe_equipo: user['givenName'],
-            telefono: "",
+            jefe_equipo: user['displayName'],
+            telefono: user['mobilePhone'],
             fecha: new Date().toISOString().slice(0, 10),
             contacto_obra: oferta.cliente!,
             comentarios: comments,
@@ -172,7 +174,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 </Text>
                 {/* Displays the project contact */}
                 <Text style={styles.text}>
-                    <Text style={styles.boldText}>Fecha oferta:</Text> {(oferta.fecha) || 'N/A'}
+                    <Text style={styles.boldText}>Fecha oferta:</Text> {(oferta.fecha)?.substring(0, 10) || 'N/A'}
                 </Text>
 
             </View>
@@ -182,48 +184,55 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
             {/* Section: Line Items Input */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Líneas a Introducir</Text>
+
                 {/* Maps through each line to create input fields */}
                 {lineas.map((linea) => {
-                        if (linea.ppcl_IdParte) {
+                        console.log(linea)
+                        if (linea.ocl_Cantidad === 0 || linea.ppcl_cantidad < linea.ocl_Cantidad) {
+                            return (
+                                <View key={linea.ocl_idlinea} style={styles.lineItem}>
+                                    {/* Displays the line name */}
+                                    <Text style={styles.lineName}>{linea.ocl_Descrip}</Text>
+                                    {/* Input field for the quantity of the line */}
+                                    <TextInput
+                                        style={styles.quantityInput}
+                                        keyboardType="numeric"
+                                        placeholder="Cantidad"
+                                        value={lineQuantities[linea.ocl_idlinea ? linea.ocl_idlinea : ""] || ''}
+                                        onChangeText={(value) => handleQuantityChange(linea.ocl_idlinea ? linea.ocl_idlinea : "", value)}
+                                    />
+                                    {/* Displays the unit of measurement for the quantity */}
+                                    <Text
+                                        style={styles.unitText}>{linea.ppcl_cantidad ? linea.ppcl_cantidad : 0} / {linea.ocl_UnidadesPres}{linea.ocl_tipoUnidad}</Text>
+                                </View>
+                            )
+                        } else {
                             return null
-                        } else return (
-                            <View key={linea.ocl_idlinea} style={styles.lineItem}>
-                                {/* Displays the line name */}
-                                <Text style={styles.lineName}>{linea.ocl_Descrip}</Text>
-                                {/* Input field for the quantity of the line */}
-                                <TextInput
-                                    style={styles.quantityInput}
-                                    keyboardType="numeric"
-                                    placeholder="Cantidad"
-                                    value={lineQuantities[linea.ocl_idlinea ? linea.ocl_idlinea : ""] || ''}
-                                    onChangeText={(value) => handleQuantityChange(linea.ocl_idlinea ? linea.ocl_idlinea : "", value)}
-                                />
-                                {/* Displays the unit of measurement for the quantity */}
-                                <Text style={styles.unitText}>{linea.ocl_UnidadesPres}</Text>
-                            </View>
-                        )
+                        }
                     }
                 )}
 
+
+                {/*
                 <Text>Líneas adicionales</Text>
                 <View key={3} style={styles.lineItem}>
-                    {/* Displays the line name */}
                     <TextInput style={styles.textinput}
                                placeholder="Descripción actividad"></TextInput>
-                    {/* Input field for the quantity of the line */}
+
                     <TextInput
                         style={styles.quantityInput}
                         keyboardType="numeric"
                         placeholder="Cantidad"
                     />
-                    {/* Displays the unit of measurement for the quantity */}
                     <Text style={styles.unitText}>{}</Text>
-                </View>
+            </View>
+                   */}
             </View>
 
             <View style={styles.separator}/>
 
-            {/* Section: Comments Input */}
+            {/* Section: Comments Input */
+            }
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Comentarios</Text>
                 {/* Input field for general comments */}
@@ -238,7 +247,8 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
             </View>
             <View style={styles.separator}/>
 
-            {/* Submit Button */}
+            {/* Submit Button */
+            }
             <View style={styles.section}>
                 <SignaturePad
                     onDrawingStatusChange={handleDrawingStatusChange}
@@ -246,7 +256,8 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 />
             </View>
 
-            {/* Botones */}
+            {/* Botones */
+            }
             <View style={styles.buttonContainer}>
                 <TouchableOpacity
                     style={[styles.button, styles.cancelButton]}
@@ -270,76 +281,111 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
             </View>
 
         </ScrollView>
-    );
+    )
+        ;
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: '#f8f8f8',
-        marginTop: 40,
-    },
+        padding:
+            20,
+        backgroundColor:
+            '#f8f8f8',
+        marginTop:
+            40,
+    }
+    ,
     menuButton: {
         marginRight: 15,
-        padding: 5,
-    },
+        padding:
+            5,
+    }
+    ,
     buttonContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 15,
-        marginBottom: 50,
-    },
+        justifyContent:
+            'space-between',
+        gap:
+            15,
+        marginBottom:
+            50,
+    }
+    ,
     button: {
         flex: 1,
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+        paddingVertical:
+            15,
+        borderRadius:
+            8,
+        alignItems:
+            'center',
+        justifyContent:
+            'center',
+    }
+    ,
     cancelButton: {
         backgroundColor: 'white',
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-    },
+        borderWidth:
+            1,
+        borderColor:
+            '#e2e8f0',
+    }
+    ,
     cancelButtonText: {
         color: '#64748b',
-        fontSize: 16,
-        fontWeight: '600',
-    },
+        fontSize:
+            16,
+        fontWeight:
+            '600',
+    }
+    ,
     submitButton: {
         backgroundColor: '#3EB1A5',
-    },
+    }
+    ,
     submitButtonText: {
         color: 'white',
-        fontSize: 16,
-        fontWeight: '600',
-    },
+        fontSize:
+            16,
+        fontWeight:
+            '600',
+    }
+    ,
     disabledButton: {
         backgroundColor: '#94a3b8',
-    },
+    }
+    ,
     section: {
         backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 5,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        borderRadius:
+            10,
+        padding:
+            15,
+        marginBottom:
+            5,
+        shadowColor:
+            '#000',
+        shadowOffset:
+            {width: 0, height: 2},
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-    },
+    }
+    ,
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         marginBottom: 10,
         color: '#333',
-    },
+    }
+    ,
     text: {
         fontSize: 16,
         marginBottom: 5,
         color: '#555',
-    },
+    }
+    ,
     boldText: {
         fontWeight: 'bold',
         color: '#333',
@@ -352,50 +398,79 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#eee',
     },
+    lineHeader: {
+        flex: 1,
+        width: '100%',
+        fontSize: 12,
+        marginRight: 5,
+    },
+
     lineName: {
         flex: 2, // Takes more space
-        fontSize: 16,
+        fontSize: 12,
         marginRight: 10,
         color: '#333',
     },
     quantityInput: {
-        flex: 1, // Takes less space
+        flex: 0.5, // Takes less space
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 5,
-        padding: 8,
-        fontSize: 16,
+        paddingVertical: 10,
+        fontSize: 12,
         textAlign: 'center',
     },
     textinput: {
         flex: 4.5,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 5,
-        padding: 8,
-        fontSize: 16,
-        margin: 4,
-    },
+        borderWidth:
+            1,
+        borderColor:
+            '#ddd',
+        borderRadius:
+            5,
+        padding:
+            8,
+        fontSize:
+            16,
+        margin:
+            4,
+    }
+    ,
     unitText: {
         flex: 0.8, // Takes even less space
-        fontSize: 16,
-        marginLeft: 10,
-        color: '#777',
-    },
+        fontSize:
+            16,
+        marginLeft:
+            10,
+        color:
+            '#777',
+    }
+    ,
     commentsInput: {
         borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 5,
-        padding: 10,
-        fontSize: 16,
-        height: 100, // Fixed height for comments input
-        textAlignVertical: 'top', // Aligns text to the top for multiline input
-        color: '#333',
-    },
+        borderColor:
+            '#ddd',
+        borderRadius:
+            5,
+        padding:
+            10,
+        fontSize:
+            16,
+        height:
+            100, // Fixed height for comments input
+        textAlignVertical:
+            'top', // Aligns text to the top for multiline input
+        color:
+            '#333',
+    }
+    ,
     separator: {
         height: 1,
-        backgroundColor: '#e0e0e0',
-        marginVertical: 20,
-    },
+        backgroundColor:
+            '#e0e0e0',
+        marginVertical:
+            20,
+    }
+    ,
 });
 

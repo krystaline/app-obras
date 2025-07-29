@@ -24,6 +24,7 @@ export interface LineaOferta {
     ppcl_DescripArticulo: string | null; // Assuming it would be a string if not null
     ppcl_cantidad: number | null;
     ppcl_UnidadMedida: string | null; // Assuming it would be a string if not null
+    ocl_tipoUnidad : string | null;
     ppcl_Certificado: number;
     ppcc_observaciones: string | null;
 }
@@ -39,6 +40,7 @@ export interface LineaPedidoPDF {
     ya_certificado: number;
     unidades_puestas_hoy: number;
     medida: string;
+    cantidad: number;
 }
 
 export interface ParteImprimirPDF {
@@ -95,7 +97,7 @@ export interface LineaPartePost {
     id_parte: number;
     id_oferta: number; // ocl_IdOferta
     descripcion: string; // ocl_Descrip
-    medida: string | number; // ¡Cambiado a string | number!
+    medida: string; // ¡Cambiado a string | number!
     unidades_puestas_hoy: number;
     unidades_totales: number; // ocl_Cantidad
     ya_certificado: number; // ppcl_Certificado
@@ -144,4 +146,19 @@ export interface ApiResponse<T> {
     data?: T;
     message?: string;
     error?: string;
+}
+
+
+export interface Worker {
+    id: string;
+    display_name: string;
+    email: string;
+    type: string;
+    selected: boolean;
+}
+
+export interface WorkerParte {
+    idParte: number;
+    idTrabajador: string;
+    nombreTrabajador: string
 }

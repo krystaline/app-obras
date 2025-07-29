@@ -47,25 +47,32 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
             </View>
         );
     }
-    const groupLineasByIdParte = (lineas: LineaOferta[]) => {
-        return lineas.reduce((acc: { [key: number]: LineaOferta[] }, linea) => {
-            const idParte = linea.ppcl_IdParte;
-            if (idParte) {
-                if (!acc[idParte]) {
-                    acc[idParte] = [];
-                }
-                acc[idParte].push(linea);
-            } else {
-                if (!acc[0]) acc[0] = []
-                acc[0].push(linea);
-            }
-            return acc;
-        }, {});
-    };
-    const groupedLineas = lineas ? groupLineasByIdParte(lineas) : {}; // Asegúrate de que lineas no sea undefined    const idPartes = Object.keys(groupedLineas).map(Number).sort((a, b) => a - b); // Get and sort unique idPartes
-    const idPartes = Object.keys(groupedLineas).map(Number).sort((a, b) => a - b); // Get and sort unique idPartes
+    // Inside your InfoOferta component:
 
-    // let imgSource = {uri: oferta.signature}
+    const groupLineasByParteAndQuantityStatus = (lineas: LineaOferta[]) => {
+        const groupedByParte: { [key: number]: { completed: LineaOferta[], pending: LineaOferta[] } } = {};
+
+        lineas.forEach(linea => {
+            const idParte = linea.ppcl_IdParte || 0; // Use 0 for lines without a part
+
+            if (!groupedByParte[idParte]) {
+                groupedByParte[idParte] = {completed: [], pending: []};
+            }
+            // @ts-ignore
+            if (linea.ppcl_cantidad <= linea.ocl_UnidadesPres) {
+                console.log("linea completada", linea)
+                groupedByParte[idParte].completed.push(linea);
+            } else {
+                groupedByParte[idParte].pending.push(linea);
+            }
+        });
+
+        return groupedByParte;
+    };
+
+    const groupedAndStatusLineas = lineas ? groupLineasByParteAndQuantityStatus(lineas) : {};
+    const idPartes = Object.keys(groupedAndStatusLineas).map(Number).sort((a, b) => a - b);
+
     return (
         <ScrollView style={styles.container}
                     refreshControl={
@@ -112,54 +119,74 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                         proyecto: oferta.descripcion ? oferta.descripcion : "",
                     })}><Text>➕ Crear Parte</Text></TouchableOpacity>
                 {lineas && lineas.length > 0 ? (
-                    // Map over the sorted idPartes
                     idPartes.map((idParte) => (
                         <TouchableOpacity key={idParte} onPress={() => {
                             navigation.navigate('ParteDetail', {
                                 user: user, accessToken: accessToken, parteId: idParte
                             })
                         }}>
-
-                            {/* Title for the group */}
                             <Text
                                 style={styles.groupTitle}>{idParte ? "Grupo parte: " + idParte + "" : "Líneas sin parte"}</Text>
-                            {/* Map over the lineas within this idParte group */}
-                            {groupedLineas[idParte].map((linea: LineaOferta) => (
-                                <TouchableOpacity
-                                    key={linea.ocl_idlinea} // Use a unique key for each linea
-                                    onPress={() => navigation.navigate("InfoLinea", {
-                                        user,
-                                        accessToken,
-                                        linea,
-                                        idParte
-                                    })}>
-                                    <View
-                                        style={linea.ppcl_Certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
-                                        <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
-                                        <Text
-                                            style={styles.activityText}>Cantidad
-                                            (realizado/ofertado): {linea.ppcl_cantidad} / {linea.ocl_UnidadesPres}</Text>
-                                        {/*UNIDAD MEDIDA ES LO QUE SE HA HECHO, unidadespres lo que se ha ofertado*/}
-                                        <Text style={styles.activityText}>ID Actividad: {linea.ocl_IdArticulo}</Text>
-                                        <Text
-                                            style={styles.activityText}>Certificado: {linea.ppcl_Certificado > 0 ? "Sí" : "No"}</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
+
+                            {groupedAndStatusLineas[idParte].completed.length > 0 && (
+                                <View>
+                                    <Text style={styles.subGroupTitle}>Cantidad Realizada || Cantidad Ofertada:</Text>
+                                    {groupedAndStatusLineas[idParte].completed.map((linea: LineaOferta) => (
+                                        <TouchableOpacity
+                                            key={linea.ocl_idlinea}
+                                            onPress={() => navigation.navigate("InfoLinea", {
+                                                user,
+                                                accessToken,
+                                                linea,
+                                                idParte
+                                            })}>
+                                            <View
+                                                style={linea.ppcl_Certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
+                                                <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
+                                                <Text style={styles.activityText}>Cantidad
+                                                    (realizado/ofertado): {linea.ppcl_cantidad} / {linea.ocl_UnidadesPres}</Text>
+                                                <Text style={styles.activityText}>ID
+                                                    Actividad: {linea.ocl_IdArticulo}</Text>
+                                                <Text
+                                                    style={styles.activityText}>Certificado: {linea.ppcl_Certificado > 0 ? "Sí" : "No"}</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
+
+                            {groupedAndStatusLineas[idParte].pending.length > 0 && (
+                                <View>
+                                    <Text style={styles.subGroupTitle}>Cantidad Realizada | Cantidad Ofertada:</Text>
+                                    {groupedAndStatusLineas[idParte].pending.map((linea: LineaOferta) => (
+                                        <TouchableOpacity
+                                            key={linea.ocl_idlinea}
+                                            onPress={() => navigation.navigate("InfoLinea", {
+                                                user,
+                                                accessToken,
+                                                linea,
+                                                idParte
+                                            })}>
+                                            <View
+                                                style={linea.ppcl_Certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
+                                                <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
+                                                <Text style={styles.activityText}>Cantidad
+                                                    (realizado/ofertado): {linea.ppcl_cantidad} / {linea.ocl_UnidadesPres}{linea.ocl_tipoUnidad}</Text>
+                                                <Text style={styles.activityText}>ID
+                                                    Actividad: {linea.ocl_IdArticulo}</Text>
+                                                <Text
+                                                    style={styles.activityText}>Certificado: {linea.ppcl_Certificado > 0 ? "Sí" : "No"}</Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
                         </TouchableOpacity>
                     ))
                 ) : (
                     <Text style={styles.value}>No hay lineas registradas.</Text>
                 )}
             </View>
-
-            {/*<TouchableOpacity style={styles.assignWorkersCard}>*/
-            }
-            {/*    <Text style={styles.workersLabel}>👷🏻‍♂️ Asignar trabajadores</Text>*/
-            }
-            {/*</TouchableOpacity>*/
-            }
-
         </ScrollView>
     );
 };
@@ -181,7 +208,11 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 5,
     },
-
+    subGroupTitle: {
+        backgroundColor: '#ffffff',
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+    },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
@@ -196,17 +227,6 @@ const styles = StyleSheet.create({
     },
     card: {
         backgroundColor: '#fff',
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 15,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
-    },
-    assignWorkersCard: {
-        backgroundColor: '#3EB1A5',
         padding: 15,
         borderRadius: 10,
         marginBottom: 15,

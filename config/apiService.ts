@@ -1,13 +1,13 @@
 // services/apiService.ts
 import {Platform} from 'react-native';
-import {ApiResponse, ParteImprimirPDF} from "./types";
+import {ApiResponse, ParteImprimirPDF, Worker} from "./types";
 
 // Configuración de la API
 const getBaseUrl = () => {
     if (__DEV__) {
         // En desarrollo
         if (Platform.OS === 'android') {
-            return 'http://192.168.0.104:8082';
+            return 'http://10.0.2.104:8082';
         } else if (Platform.OS === 'ios') {
             return 'http://10.0.2.104:8082';
         } else {
@@ -133,6 +133,34 @@ class ApiService {
         });
     }
 
+    async getWorkers(accessToken: string): Promise<ApiResponse<any[]>> {
+        return this.makeRequest('/api/workers', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            }
+        })
+    }
+
+    async assignWorkers(accessToken: string, parteId: number, workers: Worker[]): Promise<ApiResponse<any[]>> {
+        return this.makeRequest(`/api/partes/${parteId}/workers`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(workers),
+        })
+    }
+
+    async getWorkersParte(accessToken: string, parteId: number): Promise<ApiResponse<any[]>> {
+        return this.makeRequest(`/api/partes/${parteId}/workers`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            }
+        })
+    }
+
     // Obtener lista de partes
     async getPartes(accessToken: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/partes', {
@@ -145,24 +173,6 @@ class ApiService {
 
     async getOfertas(accessToken: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/ofertas', { // todo he cambiado esto, antes era ofertas
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-            },
-        });
-    }
-
-    async getProyectos(accessToken: string): Promise<ApiResponse<any[]>> {
-        return this.makeRequest('/api/proyectos', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-            },
-        });
-    }
-
-    async getContactos(accessToken: string): Promise<ApiResponse<any[]>> {
-        return this.makeRequest('/api/contacts', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,

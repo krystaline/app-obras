@@ -1,10 +1,20 @@
 // src/screens/ParteDetailScreen.tsx
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Linking} from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    ActivityIndicator,
+    Alert,
+    TouchableOpacity,
+    Linking,
+    FlatList
+} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList} from '../App';
 import {apiService} from '../config/apiService';
-import {LineaPartePDF, LineaPartePost, ParteResponsePDF} from "../config/types";
+import {LineaPartePDF, ParteResponsePDF, Worker, WorkerParte} from "../config/types";
 import {Ionicons} from "@expo/vector-icons";
 
 type ParteDetailScreenProps = StackScreenProps<MainTabParamList, 'ParteDetail'>;
@@ -14,9 +24,11 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
     const [parteDetails, setParteDetails] = useState<ParteResponsePDF | null>(null);
     const [loading, setLoading] = useState(true);
     const [mensaje, setMensaje] = useState("");
+
+    const [workers, setWorkers] = useState<WorkerParte[]>([]);
+
+
     useEffect(() => {
-
-
         const fetchParteDetails = async () => {
             setLoading(true);
             const response = await apiService.getPartePdf(parteId, accessToken);
@@ -29,7 +41,18 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
             setLoading(false);
         };
 
+        const fetchWorkersParte = async () => {
+            setLoading(true)
+            const res = await apiService.getWorkersParte(accessToken, parteId);
+            if (res.success && res.data) {
+                setWorkers(res.data!);
+            } else {
+                Alert.alert("Error", res.error || "No se pudieron cargar los trabajadores del parte.");
+            }
+        }
+
         fetchParteDetails();
+        fetchWorkersParte();
     }, [parteId, accessToken]);
 
 
@@ -40,6 +63,32 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
                 <Text style={styles.loadingText}>Cargando detalles del parte...</Text>
             </View>
         );
+    }
+
+    const renderWorker = ({item}: { item: WorkerParte }) => (
+        <View style={styles.lineItem}>
+            <Text style={styles.lineDesc}>{item.nombreTrabajador}</Text>
+        </View>
+    )
+
+
+    const listaTrabajadores = () => {
+        if (workers.length > 0) {
+
+            return (
+                <View style={styles.section}>
+                    {workers.map((worker: WorkerParte) => (<View style={styles.lineItem}>
+                        <Text style={styles.lineDesc}>{worker.nombreTrabajador}</Text>
+                    </View>))}
+                </View>
+            )
+        } else {
+            return (
+                <View style={styles.section}>
+                    <Text>No hay trabajadores asignados</Text>
+                </View>
+            )
+        }
     }
 
     if (!parteDetails) {
@@ -76,6 +125,12 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
                         style={styles.infoValue}>{parteDetails.comentarios}</Text></Text>
                 )}
             </View>
+            <TouchableOpacity style={styles.assignWorkersButton} onPress={() => {
+                navigation.navigate('AsignarTrabajadoresScreen', {user, accessToken, parteId})
+            }}>
+                <Text style={styles.assignWorkersText}>👷🏻‍♂️ Asignar trabajadores</Text>
+            </TouchableOpacity>
+            {listaTrabajadores()}
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Líneas del Parte ({parteDetails.lineas.length})</Text>
@@ -100,7 +155,6 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
             }}>
                 <Text style={styles.generatePdfButtonText}>Generar Parte en PDF</Text>
             </TouchableOpacity>
-
             {/* Puedes mostrar la firma si la tienes y es una imagen base64 */}
             {/* {parteDetails.signature && (
                 <View style={styles.section}>
@@ -221,6 +275,21 @@ const styles = StyleSheet.create({
         color: '#888',
         textAlign: 'center',
         paddingVertical: 10,
+    },
+    assignWorkersButton: {
+        backgroundColor: '#eaa53e',
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 15,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    assignWorkersText: {
+        fontSize: 18,
+        fontWeight: '500'
     },
     generatePdfButton: {
         backgroundColor: '#5BBDB3',
