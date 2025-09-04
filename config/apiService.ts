@@ -9,13 +9,14 @@ const getBaseUrl = () => {
         if (Platform.OS === 'android') {
             return 'http://10.0.2.104:8082';
         } else if (Platform.OS === 'ios') {
+            console.log("ESTOY EN IOS")
             return 'http://10.0.2.104:8082';
         } else {
             return 'http://192.168.0.104:8082';
         }
     } else {
         // En producción
-        return 'https://tu-api-produccion.com';
+        return 'http://85.50.122.98:8082';
     }
 };
 
@@ -79,6 +80,7 @@ class ApiService {
             if (error.name === 'TimeoutError') {
                 errorMessage = 'Timeout: La petición tardó demasiado';
             } else if (error.message.includes('Network request failed')) {
+                console.error(error)
                 errorMessage = 'Sin conexión a internet o servidor no disponible';
             } else if (error.message.includes('ECONNREFUSED')) {
                 errorMessage = 'Servidor no disponible (verifica que esté ejecutándose)';
@@ -172,6 +174,7 @@ class ApiService {
     }
 
     async getOfertas(accessToken: string): Promise<ApiResponse<any[]>> {
+        console.log("ESTOY CONECTADO?? ", API_BASE_URL)
         return this.makeRequest('/api/ofertas', { // todo he cambiado esto, antes era ofertas
             method: 'GET',
             headers: {
@@ -192,6 +195,30 @@ class ApiService {
     // Getter para obtener la URL base (útil para debugging)
     getBaseUrl(): string {
         return this.baseUrl;
+    }
+
+
+
+    async getImages(accessToken: string, idOferta: number): Promise<ApiResponse<any>> {
+        // This endpoint now returns an object like { "images": ["image1.jpg", "image2.jpg"] }
+        return this.makeRequest(`/api/oferta/imagenes/${idOferta}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+    }
+
+
+    async postImage(accessToken: string, formdata: any): Promise<ApiResponse<any>> {
+        console.log("pimpam")
+        return this.makeRequest(`/api/imagen`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            body: formdata,
+        });
     }
 }
 

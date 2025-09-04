@@ -149,7 +149,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
             <TouchableOpacity style={styles.generatePdfButton} onPress={() => {
                 apiService.imprimirPDF(parteId.toString(), accessToken).then(response => {
                     if (response.data.mensaje == 'OK') {
-                        Alert.alert("PDF generado", "El PDF se ha generado correctamente.", [])
+                        Alert.alert("PDF generado", "El PDF se ha generado correctamente.")
                     }
                 })
             }}>
@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f4f7',
         padding: 20,
         paddingTop: 90,
+
     },
     loadingContainer: {
         flex: 1,
@@ -297,12 +298,13 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         marginTop: 20,
-        marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 5,
+        marginBottom: 120
+
     },
     generatePdfButtonText: {
         color: '#fff',

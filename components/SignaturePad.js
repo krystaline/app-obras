@@ -1,16 +1,26 @@
 // SignaturePad.js
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import React, {useRef, useEffect, useState} from 'react'; // <--- Import useEffect and useState
+import {View, Text, StyleSheet, Button} from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 
 // Agregamos una prop `onDrawingStatusChange` para notificar al padre
-const SignaturePad = ({ onSignatureSaved, onDrawingStatusChange }) => { // <--- Modificado
+const SignaturePad = ({onSignatureSaved, onDrawingStatusChange, visibility}) => {
     const signatureRef = useRef(null);
 
+    // Use useState for vis and update it with useEffect when the visibility prop changes
+    const [vis, setVis] = useState(visibility); // <--- Initialize with visibility prop
+
+    useEffect(() => {
+        setVis(visibility); // <--- Update vis whenever the visibility prop changes
+    }, [visibility]);
+
     const handleSignature = (signature) => {
+        console.log("guardao")
         if (onSignatureSaved) {
             onSignatureSaved(signature);
         }
+        setVis(false); // Hide the signature pad after saving
+        onDrawingStatusChange(false)
     };
 
     const handleClearSignature = () => {
@@ -25,16 +35,21 @@ const SignaturePad = ({ onSignatureSaved, onDrawingStatusChange }) => { // <--- 
         }
     };
 
+    if (!vis) {
+        return null;
+    }
     return (
-        <View style={styles.fieldContainer}>
-            <Text style={styles.signatureLabel}>Firma del Cliente:</Text>
+        <View style={styles.signatureContainer}>
             <SignatureCanvas
+                scrollable={false}
                 ref={signatureRef}
                 onOK={handleSignature}
                 // Nuevas props para controlar el estado del dibujo
                 onBegin={() => onDrawingStatusChange(false)} // Deshabilita el scroll
                 onEnd={() => onDrawingStatusChange(true)}   // Habilita el scroll
                 descriptionText="Firme aquí"
+                onClear={() => onDrawingStatusChange(false)}
+                onSignatureSaved={() => onDrawingStatusChange(false)}
                 clearText="Limpiar"
                 confirmText="Guardar"
                 autoClear={false}
@@ -55,21 +70,26 @@ const SignaturePad = ({ onSignatureSaved, onDrawingStatusChange }) => { // <--- 
 };
 
 const styles = StyleSheet.create({
-    fieldContainer: {
+    signatureContainer: {
+        flex: 1, // This is crucial for filling the screen
+        alignItems: 'center',
+        zIndex: 999,
+        flexDirection: 'column',
+        marginTop: 20,
         marginBottom: 20,
     },
     signatureLabel: {
         fontSize: 16,
         fontWeight: 'bold',
-        marginBottom: 10,
     },
     signatureCanvas: {
-        width: '100%',
-        height: 200,
+        width: '105%',
+        height: 190,
         borderColor: '#00CDB2',
         borderWidth: 3,
         borderRadius: 5,
         marginBottom: 10,
+        zIndex: 99,
     },
     signatureButtonsContainer: {
         flexDirection: 'row',

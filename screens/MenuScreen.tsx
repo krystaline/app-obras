@@ -1,15 +1,15 @@
 // MenuScreen.tsx
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
 import {RootStackParamList} from '../App';
+import {apiService} from "../config/apiService";
+import * as ImagePicker from 'expo-image-picker'
 
 type MenuScreenProps = StackScreenProps<RootStackParamList, 'Menu'>; // Define el tipo para esta pantalla
 
 export default function MenuScreen({navigation, route}: MenuScreenProps) {
     const {user, accessToken} = route.params;
-
-
 
 
     const handleLogout = () => {
@@ -18,6 +18,8 @@ export default function MenuScreen({navigation, route}: MenuScreenProps) {
             routes: [{name: 'Login'}],
         });
     };
+
+
 
     return (
         <SafeAreaView style={styles.container}>

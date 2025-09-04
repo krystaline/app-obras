@@ -1,12 +1,31 @@
 // InfoOfertasScreen.tsx
-import {Alert, Button, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {
+    Alert,
+    Button,
+    FlatList,
+    Image, Modal,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    Dimensions
+} from "react-native";
 import {StackScreenProps} from "@react-navigation/stack";
 import {MainTabParamList} from "../App";
 import {apiService} from "../config/apiService";
 import React, {useCallback, useState} from "react";
 import {Ionicons} from "@expo/vector-icons";
 import {LineaOferta, Oferta} from "../config/types";
+import * as ImagePicker from 'expo-image-picker';
+import {AntDesign} from '@expo/vector-icons'; // Si usas Expo, puedes usar este ícono para cerrar
+import ImageZoom from 'react-native-image-pan-zoom';
 
+type Tip = {
+    id: number | undefined;
+    image_name: string;
+};
 
 type InfoOfertaProps = StackScreenProps<MainTabParamList, 'InfoOferta'>; // Removed `parte: ParteData` from here
 export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Removed `oferta` from destructuring props
@@ -17,6 +36,31 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
     const [loading, setLoading] = useState(true)
     const {oferta} = route.params as { oferta: Oferta }
     const [refreshing, setRefreshing] = useState(false)
+    const [imagenes, setImagenes] = useState<Tip[]>();
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+
+
+    const renderImage = ({item}: { item: string }) => {
+        // 'item' is now a string, e.g., "imagen1.jpg"
+        const imageUrl = `${apiService.getBaseUrl()}/api/images/imagenes/${item}`;
+        console.log("Image URL to display:", imageUrl);
+
+        return (
+            <TouchableOpacity
+                style={styles.imageContainer}
+                onPress={() => {
+                    setSelectedImageUri(imageUrl);
+                    setModalVisible(true);
+                }}
+            >
+                <Image
+                    source={{uri: imageUrl}}
+                    style={styles.image}
+                />
+            </TouchableOpacity>
+        );
+    };
 
 
     const fetchLineasOferta = useCallback(() => {
@@ -32,13 +76,35 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
         });
     }, [idOferta, accessToken]); // Dependencias para useCallback
 
+    const fetchImagenesOferta = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            const response = await apiService.getImages(accessToken, idOferta);
+            if (response.success && response.data && response.data.images) {
+                // The API now returns a list of strings under the 'images' key
+                setImagenes(response.data.images);
+            } else {
+                console.error("Failed to fetch image names:", response.error);
+                setImagenes([]);
+            }
+        } catch (error) {
+            console.error("Error fetching image names:", error);
+            setImagenes([]);
+        } finally {
+            setRefreshing(false);
+        }
+    }, [idOferta, accessToken, apiService]);
+
+
     React.useEffect(() => {
         fetchLineasOferta(); // Llama a la función al montar el componente
-    }, [fetchLineasOferta]); // Dependencia para useEffect
+        fetchImagenesOferta();
+    }, [fetchLineasOferta, fetchImagenesOferta]); // Dependencia para useEffect
 
     const onRefresh = useCallback(() => {
         fetchLineasOferta(); // Llama a la misma función para refrescar
-    }, [fetchLineasOferta]);
+        fetchImagenesOferta();
+    }, [fetchLineasOferta, fetchImagenesOferta]);
 
     if (!lineas && !loading) { // Cambia la condición para mostrar el error solo si no hay líneas y no está cargando
         return (
@@ -47,8 +113,58 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
             </View>
         );
     }
-    // Inside your InfoOferta component:
 
+
+    const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
+    const enviarImagen = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: false,
+                quality: 0.5,
+                base64: false,
+                aspect: [16, 9],
+            });
+
+            if (result.canceled || !result.assets || result.assets.length === 0) {
+                console.log('No se seleccionaron imágenes.');
+                return;
+            }
+
+            // 1. Obtener la URI y el nombre del archivo directamente del resultado
+            const asset = result.assets[0];
+            const imageUri = asset.uri;
+            const imageName = asset.fileName;
+
+            // 2. Opcional: Actualizar el estado para mostrar la imagen en la UI si es necesario
+            // Aunque no se usa para el envío, es bueno tenerlo
+            setSelectedImage(imageUri);
+
+            // 3. Crear el objeto FormData para el envío
+            const formData = new FormData();
+
+            // @ts-ignore
+            formData.append('image', {
+                uri: imageUri, // ¡Usamos la URI directa del resultado!
+                name: imageName,
+                type: 'image/jpeg',
+            });
+            formData.append('idOferta', idOferta.toString());
+            // 4. Enviar la imagen
+            const response = await apiService.postImage(accessToken, formData);
+
+            // 5. Manejar la respuesta
+            if (response.success) {
+                Alert.alert('Éxito', 'La imagen se ha subido correctamente.');
+            } else {
+                Alert.alert('Error', `La subida falló: ${response.error || 'Error desconocido'}`);
+            }
+
+        } catch (error) {
+            console.error('Error al enviar la imagen:', error);
+            Alert.alert('Error', 'Hubo un problema al subir la imagen. Por favor, inténtalo de nuevo.');
+        }
+    };
     const groupLineasByParteAndQuantityStatus = (lineas: LineaOferta[]) => {
         const groupedByParte: { [key: number]: { completed: LineaOferta[], pending: LineaOferta[] } } = {};
 
@@ -72,6 +188,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
 
     const groupedAndStatusLineas = lineas ? groupLineasByParteAndQuantityStatus(lineas) : {};
     const idPartes = Object.keys(groupedAndStatusLineas).map(Number).sort((a, b) => a - b);
+
 
     return (
         <ScrollView style={styles.container}
@@ -101,12 +218,62 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                     <Text style={styles.value}> {oferta.descripcion}</Text>
                 </Text>
             </View>
-            {
-                <View style={styles.card}>
-                    <Text style={styles.label}>Observaciones: </Text>
-                    <Text style={styles.value}>{oferta.observaciones}</Text>
-                </View>
-            }
+
+            <View style={styles.card}>
+                <Text style={styles.label}>Observaciones: </Text>
+                <Text style={styles.value}>{oferta.observaciones}</Text>
+            </View>
+            <View style={styles.card}>
+                <Text style={styles.label}>Galería de imágenes: </Text>
+                <TouchableOpacity style={styles.addImageButton} onPress={enviarImagen}>
+                    <Text style={styles.addImageText}>➕ Agregar</Text>
+                </TouchableOpacity>
+                <FlatList
+                    // @ts-ignore
+                    data={imagenes}
+                    renderItem={renderImage}
+                    keyExtractor={item => item}
+                    numColumns={3}
+                    contentContainerStyle={styles.grid}
+                />
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        setModalVisible(!modalVisible);
+                    }}
+                >
+                    <View style={styles.centeredView}>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <AntDesign name="close" size={24} color="white"/>
+                        </TouchableOpacity>
+                        {selectedImageUri && (
+                            // @ts-ignore
+                            <ImageZoom
+                                cropWidth={Dimensions.get('window').width}
+                                cropHeight={Dimensions.get('window').height}
+                                imageWidth={Dimensions.get('window').width}
+                                imageHeight={Dimensions.get('window').height}
+                            >
+                                <Image
+                                    source={{uri: selectedImageUri}}
+                                    style={styles.modalImage}
+                                    resizeMode="contain"
+                                />
+                            </ImageZoom>
+                        )}
+                    </View>
+                </Modal>
+                <TouchableOpacity style={styles.seeAllImagesButton} onPress={() => {
+                }}>
+                    <Text style={styles.label}>Ver todas las imágenes</Text>
+                </TouchableOpacity>
+            </View>
+
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Lineas por parte:</Text>
@@ -188,7 +355,8 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                 )}
             </View>
         </ScrollView>
-    );
+    )
+        ;
 };
 
 const styles = StyleSheet.create({
@@ -197,6 +365,35 @@ const styles = StyleSheet.create({
         padding: 20,
         marginTop: 40,
         backgroundColor: '#f8f8f8',
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)', // Un fondo semi-transparente
+    },
+    modalImage: {
+        width: '100%',
+        height: '100%',
+    },
+    closeButton: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 1, // Para asegurar que esté por encima de la imagen
+    },
+    grid: {
+        paddingTop: 10,
+        alignItems: 'center',
+    },
+    imageContainer: {
+        width: 100,
+        height: 100,
+        padding: 2, // Espacio entre las imágenes
+    },
+    image: {
+        width: '100%',
+        height: '100%',
     },
     groupTitle: {
         fontSize: 18,
@@ -248,6 +445,16 @@ const styles = StyleSheet.create({
         color: '#555',
         marginBottom: 5,
     },
+    addImageButton: {
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        padding: 15,
+    },
+    addImageText: {
+        color: '#555',
+
+    },
     value: {
         fontSize: 16,
         color: '#333',
@@ -275,6 +482,19 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 10,
         color: '#333',
+    },
+    seeAllImagesButton: {
+        backgroundColor: '#e4e4e4',
+        width: '100%',
+        margin: 'auto',
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        padding: 12,
+        paddingBottom: 8,
+        marginTop: 8,
+        borderRadius: 10,
     },
     activityCard: {
         backgroundColor: '#f0f0f0',

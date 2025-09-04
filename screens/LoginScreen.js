@@ -3,10 +3,10 @@ import {
     StyleSheet,
     Text,
     View,
-    Button,
     Alert,
     ActivityIndicator,
-
+    Image,
+    TouchableOpacity, // Import TouchableOpacity
 } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
@@ -14,11 +14,10 @@ import {useNavigation} from "@react-navigation/native";
 import {msalConfig} from "../auth/AuthConfig";
 
 const redirectUri = AuthSession.makeRedirectUri({
-    scheme: 'appobras'
+    scheme: 'appobras', path: 'auth',
 });
 
-
-WebBrowser.maybeCompleteAuthSession(); // Es importante para iOS para manejar el cierre del navegador
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
     const navigation = useNavigation();
@@ -27,13 +26,10 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
     const [authRequest, setAuthRequest] = useState(null);
 
-
-    // Configuración de autenticación
     const discovery = {
         authorizationEndpoint: msalConfig.discovery.authorizationEndpoint,
         tokenEndpoint: msalConfig.discovery.tokenEndpoint,
     };
-
 
     const [request, response, promptAsync] = AuthSession.useAuthRequest(
         {
@@ -62,7 +58,6 @@ export default function LoginScreen() {
         }
     }, [response, request]);
 
-    // Intercambiar código por token y obtener datos del usuario
     const exchangeCodeForToken = async (code) => {
         setLoading(true)
         try {
@@ -76,11 +71,9 @@ export default function LoginScreen() {
                 }
             )
 
-            // console.log('Token:', tokenResponse);
             if (tokenResponse.accessToken) {
                 const userData = await fetchUserProfile(tokenResponse.accessToken);
                 if (userData) {
-                    // console.log('User:', userData);
                     navigation.reset({
                         index: 0,
                         routes: [{
@@ -117,7 +110,6 @@ export default function LoginScreen() {
             })
             const userData = await userResponse.json();
             setUser(userData);
-            // console.log('User:', userData);
             return userData;
         } catch (error) {
             console.error('Error:', error);
@@ -135,11 +127,6 @@ export default function LoginScreen() {
         }
     };
 
-    const handleLogout = () => {
-        setUser(null);
-        Alert.alert('Sesión cerrada', 'Has cerrado sesión correctamente');
-    };
-
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -152,14 +139,17 @@ export default function LoginScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.loginContainer}>
-                <Text style={styles.title}>Microsoft Auth App</Text>
+                <Image source={require('../assets/logo-completo.png')} style={styles.kryslogo}/>
+                <Text style={styles.title}>Aplicación de obras Krystaline</Text>
                 <Text style={styles.subtitle}>Inicia sesión con tu cuenta Microsoft</Text>
-                <Button
-                    title="Iniciar Sesión con Microsoft"
+                {/* Use TouchableOpacity instead of Button */}
+                <TouchableOpacity
+                    style={[styles.loginButton, !request && styles.disabledButton]} // Apply disabled style
                     onPress={handleLogin}
-                    color="#0078d4"
-                    disabled={!request}
-                />
+                    disabled={!request || loading} // Disable when request is not ready or loading
+                >
+                    <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -171,7 +161,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 20,
+        padding: 15,
     },
     loadingContainer: {
         flex: 1,
@@ -187,18 +177,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    userContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'white',
-        padding: 30,
-        borderRadius: 15,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 5,
-    },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -211,15 +189,27 @@ const styles = StyleSheet.create({
         marginBottom: 30,
         textAlign: 'center',
     },
-    userName: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#0078d4',
-        marginBottom: 5,
+    kryslogo: {
+        position: 'absolute',
+        top: -150,
+        height: 60,
+        objectFit: "contain"
     },
-    userEmail: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 20,
+    loginButton: {
+        backgroundColor: '#5BBDB3',
+        paddingVertical: 12, // Use paddingVertical for better control
+        paddingHorizontal: 20, // Use paddingHorizontal
+        borderRadius: 8,
+        marginTop: 20,
+        alignSelf: 'center',
+    },
+    loginButtonText: {
+        color: '#f5f5f5',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    disabledButton: {
+        backgroundColor: '#a0cbe8', // A lighter shade of blue for disabled state
     },
 });

@@ -1,3 +1,4 @@
+// CrearParteScreen.tsx
 import React, {useState, useEffect} from 'react';
 import SignaturePad from "../components/SignaturePad";
 
@@ -28,13 +29,14 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
     const [isScrollingEnabled, setIsScrollingEnabled] = useState(true);
 
     // State to hold the quantities for each line.
-    // We use a Record<string, string> where keys are line IDs/names and values are their quantities.
+    // We use a Record<string, string> where keys are line IDs/names and values are their their quantities.
     const [lineQuantities, setLineQuantities] = useState<Record<string, string>>({});
 
     // State for the comments input
     const [comments, setComments] = useState<string>('');
     const handleSignatureSaved = (signatureData: string) => {
         setSignature(signatureData);
+        setSignaturePadVisibility(false); // <--- Add this line to hide the signature pad
     };
 
     const handleDrawingStatusChange = (isDrawing: boolean) => {
@@ -85,6 +87,11 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
             [lineId]: value,
         }));
     };
+
+    const [signaturePadVisibility, setSignaturePadVisibility] = useState(false);
+    const showSignaturePad = () => {
+        setSignaturePadVisibility(true);
+    }
 
     // Handler for form submission
     const handleSubmit = async () => {
@@ -160,7 +167,8 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
     };
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={styles.container}
+                    scrollEnabled={isScrollingEnabled}>
             {/* Section: Displayed Project Data */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Datos del Proyecto</Text>
@@ -188,6 +196,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 {/* Maps through each line to create input fields */}
                 {lineas.map((linea) => {
                         console.log(linea)
+
                         if (linea.ocl_Cantidad === 0 || linea.ppcl_cantidad < linea.ocl_Cantidad) {
                             return (
                                 <View key={linea.ocl_idlinea} style={styles.lineItem}>
@@ -213,20 +222,18 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 )}
 
 
-                {/*
                 <Text>Líneas adicionales</Text>
                 <View key={3} style={styles.lineItem}>
                     <TextInput style={styles.textinput}
                                placeholder="Descripción actividad"></TextInput>
 
                     <TextInput
-                        style={styles.quantityInput}
+                        style={styles.quantityInput2}
                         keyboardType="numeric"
                         placeholder="Cantidad"
                     />
                     <Text style={styles.unitText}>{}</Text>
-            </View>
-                   */}
+                </View>
             </View>
 
             <View style={styles.separator}/>
@@ -245,16 +252,19 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                     onChangeText={setComments}
                 />
             </View>
-            <View style={styles.separator}/>
 
-            {/* Submit Button */
-            }
-            <View style={styles.section}>
-                <SignaturePad
-                    onDrawingStatusChange={handleDrawingStatusChange}
-                    onSignatureSaved={handleSignatureSaved}
-                />
-            </View>
+            {/* Submit Button */}
+            <TouchableOpacity
+                style={[styles.loginButton]} // Apply disabled style
+                onPress={showSignaturePad}
+            >
+                <Text style={styles.loginButtonText}>Firmar documento</Text>
+            </TouchableOpacity>
+            <SignaturePad
+                onDrawingStatusChange={handleDrawingStatusChange}
+                onSignatureSaved={handleSignatureSaved}
+                visibility={signaturePadVisibility} // Ensure this prop is passed
+            />
 
             {/* Botones */
             }
@@ -268,9 +278,9 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.button, styles.submitButton, loading && styles.disabledButton]}
+                    style={[styles.button, styles.submitButton, signature.length === 0 && styles.disabledButton]}
                     onPress={handleSubmit}
-                    disabled={loading}
+                    disabled={signature.length === 0}
                 >
                     {loading ? (
                         <ActivityIndicator size="small" color="white"/>
@@ -288,104 +298,85 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding:
-            20,
-        backgroundColor:
-            '#f8f8f8',
-        marginTop:
-            40,
-    }
-    ,
+        padding: 20,
+        backgroundColor: '#f8f8f8',
+        marginTop: 40,
+    },
     menuButton: {
         marginRight: 15,
-        padding:
-            5,
-    }
-    ,
+        padding: 5,
+    },
     buttonContainer: {
         flexDirection: 'row',
-        justifyContent:
-            'space-between',
-        gap:
-            15,
-        marginBottom:
-            50,
-    }
-    ,
+        justifyContent: 'space-between',
+        gap: 15,
+        marginBottom: 120,
+    },
+    loginButton: {
+        backgroundColor: '#5BBDB3',
+        paddingVertical: 12, // Use paddingVertical for better control
+        paddingHorizontal: 20, // Use paddingHorizontal
+        borderRadius: 8,
+        margin: 20,
+        alignSelf: 'center',
+    },
+    loginButtonText: {
+        color: '#f5f5f5',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
     button: {
         flex: 1,
-        paddingVertical:
-            15,
-        borderRadius:
-            8,
-        alignItems:
-            'center',
-        justifyContent:
-            'center',
-    }
-    ,
+        paddingVertical: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     cancelButton: {
         backgroundColor: 'white',
-        borderWidth:
-            1,
-        borderColor:
-            '#e2e8f0',
-    }
-    ,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+    },
     cancelButtonText: {
         color: '#64748b',
-        fontSize:
-            16,
-        fontWeight:
-            '600',
-    }
-    ,
+        fontSize: 16,
+        fontWeight: '600',
+    },
     submitButton: {
         backgroundColor: '#3EB1A5',
-    }
-    ,
+    },
     submitButtonText: {
         color: 'white',
-        fontSize:
-            16,
+        fontSize: 16,
         fontWeight:
             '600',
-    }
-    ,
+    },
     disabledButton: {
         backgroundColor: '#94a3b8',
-    }
-    ,
+    },
     section: {
         backgroundColor: '#fff',
-        borderRadius:
-            10,
-        padding:
-            15,
-        marginBottom:
-            5,
-        shadowColor:
-            '#000',
-        shadowOffset:
-            {width: 0, height: 2},
+        borderRadius: 10,
+        padding: 15,
+        marginBottom: 5,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-    }
-    ,
+    },
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         marginBottom: 10,
         color: '#333',
-    }
-    ,
+    },
     text: {
         fontSize: 16,
         marginBottom: 5,
         color: '#555',
-    }
-    ,
+    },
     boldText: {
         fontWeight: 'bold',
         color: '#333',
@@ -420,57 +411,43 @@ const styles = StyleSheet.create({
         fontSize: 12,
         textAlign: 'center',
     },
+    quantityInput2: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        paddingVertical: 10,
+        fontSize: 12,
+        textAlign: 'center',
+    },
     textinput: {
         flex: 4.5,
-        borderWidth:
-            1,
-        borderColor:
-            '#ddd',
-        borderRadius:
-            5,
-        padding:
-            8,
-        fontSize:
-            16,
-        margin:
-            4,
-    }
-    ,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        padding: 8,
+        fontSize: 16,
+        margin: 4,
+    },
     unitText: {
         flex: 0.8, // Takes even less space
-        fontSize:
-            16,
-        marginLeft:
-            10,
-        color:
-            '#777',
-    }
-    ,
+        fontSize: 16,
+        marginLeft: 10,
+        color: '#777',
+    },
     commentsInput: {
         borderWidth: 1,
-        borderColor:
-            '#ddd',
-        borderRadius:
-            5,
-        padding:
-            10,
-        fontSize:
-            16,
-        height:
-            100, // Fixed height for comments input
-        textAlignVertical:
-            'top', // Aligns text to the top for multiline input
-        color:
-            '#333',
-    }
-    ,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        padding: 10,
+        fontSize: 16,
+        height: 100, // Fixed height for comments input
+        textAlignVertical: 'top', // Aligns text to the top for multiline input
+        color: '#333',
+    },
     separator: {
         height: 1,
-        backgroundColor:
-            '#e0e0e0',
-        marginVertical:
-            20,
-    }
-    ,
+        backgroundColor: '#e0e0e0',
+        marginVertical: 20,
+    },
 });
-

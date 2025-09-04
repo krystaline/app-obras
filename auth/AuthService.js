@@ -29,6 +29,7 @@ class AuthService {
 
             const redirectUri = AuthSession.makeRedirectUri({
                 useProxy: true, // Usar proxy de Expo para desarrollo
+                scheme: 'com.krystaline.appobras'
             });
 
             console.log('Redirect URI:', redirectUri);
