@@ -1,6 +1,6 @@
-// IncidentListScreen.tsx
+// PartesListScreen.tsx
 
-import React, {useState, useCallback, useEffect} from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,10 +12,10 @@ import {
     Alert,
     ActivityIndicator
 } from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList, RootStackParamList} from '../../App';
-import {Ionicons} from "@expo/vector-icons";
-import {apiService} from "../../config/apiService";
+import { StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList, RootStackParamList } from '../../App';
+import { Ionicons } from "@expo/vector-icons";
+import { apiService } from "../../config/apiService";
 // import { Parte } from "../../config/types";
 type Parte = {
     idParte: string;
@@ -25,12 +25,12 @@ type Parte = {
     status: string;
 }
 
-type IncidentListScreenProps = StackScreenProps<MainTabParamList, 'ListarPartesMO'> & {
+type PartesListScreenProps = StackScreenProps<MainTabParamList, 'ListarPartesMO'> & {
     navigation: StackScreenProps<RootStackParamList>['navigation'];
 };
 
-export default function IncidentListScreen({route, navigation}: IncidentListScreenProps) {
-    const {user, accessToken} = route.params;
+export default function PartesListScreen({ route, navigation }: PartesListScreenProps) {
+    const { user, accessToken } = route.params;
 
     const [partes, setPartes] = useState<Parte[]>([]);
     const [refreshing, setRefreshing] = useState(false);
@@ -82,18 +82,31 @@ export default function IncidentListScreen({route, navigation}: IncidentListScre
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#007bff"/>
-                <Text style={styles.loadingText}>Cargando incidencias</Text>
+                <Text style={styles.loadingText}>Cargando partes de mano de obra...</Text>
             </View>
         );
     }
 
     return (
         <View style={styles.container}>
-
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Partes de Mano de Obra</Text>
+                <Text style={styles.headerSubtitle}>Tus partes recientes</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Menu', { user, accessToken })}
+                                  style={styles.menuButton}>
+                    <Ionicons name="menu" size={30} color="#fff"/>
+                </TouchableOpacity>
+            </View>
+            <TextInput
+                style={styles.searchBar}
+                placeholder="Buscar partes..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+            />
             <FlatList
                 data={filteredPartes}
                 keyExtractor={(item) => String(item.idParte)}
-                renderItem={({item}) => (
+                renderItem={({ item }) => (
                     <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectParte(item)}>
                         <Text style={styles.itemTitle}>Parte: {item.idParte}</Text>
                         <Text style={styles.itemDetails}>Proyecto: {item.idProyecto || 'N/A'}</Text>
@@ -102,11 +115,11 @@ export default function IncidentListScreen({route, navigation}: IncidentListScre
                 )}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={fetchPartes} colors={["#ffc400"]}/>
+                    <RefreshControl refreshing={refreshing} onRefresh={fetchPartes} colors={["#00ffa6"]}/>
                 }
                 ListEmptyComponent={() => (
                     <View style={styles.emptyListContainer}>
-                        <Text style={styles.emptyListText}>No hay incidencias disponibles.</Text>
+                        <Text style={styles.emptyListText}>No hay partes de mano de obra disponibles.</Text>
                         <TouchableOpacity onPress={fetchPartes} style={styles.refreshButton}>
                             <Text style={styles.refreshButtonText}>Recargar</Text>
                         </TouchableOpacity>

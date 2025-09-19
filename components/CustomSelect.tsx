@@ -11,6 +11,15 @@ interface CustomSelectItem {
     createdAt?: string;
     comments ?: string
 }
+interface CustomMaterialSelectItem {
+    id: string;
+    title?: string; // Hacemos 'title' opcional para ser más flexibles
+    name?: string;  // También 'name' opcional si se usa en otros contextos
+    contact?: any;
+    teamManager?: any;
+    createdAt?: string;
+    comments ?: string
+}
 const MyCustomSelect = ({
                             items,
                             selectedValue,
@@ -18,7 +27,7 @@ const MyCustomSelect = ({
                             placeholder = "Selecciona un elemento",
                             searchable = true,
                         }: {
-    items: CustomSelectItem[];
+    items: CustomSelectItem[] | CustomMaterialSelectItem[];
     selectedValue: CustomSelectItem | null; // El valor seleccionado será un objeto
     onSelect: (item: CustomSelectItem) => void;
     placeholder?: string;

@@ -1,6 +1,7 @@
 // services/apiService.ts
 import {Platform} from 'react-native';
 import {ApiResponse, ParteImprimirPDF, Worker} from "./types";
+import {ParteMOEnviar} from "../screens/partesManoObra/NewParteMOScreen";
 
 // Configuración de la API
 const getBaseUrl = () => {
@@ -163,6 +164,29 @@ class ApiService {
         })
     }
 
+    // todo
+    async createParteMO(accessToken: string, data: ParteMOEnviar): Promise<ApiResponse<any>> {
+        console.log(data)
+        return this.makeRequest(`/api/partesMO/new`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(data),
+        })
+    }
+
+    // partes mano de obra
+    async getPartesMO(idOferta: number, accessToken: string): Promise<ApiResponse<any[]>> {
+        console.log(idOferta)
+        return this.makeRequest(`/api/partesMO/${idOferta}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+    }
+
     // Obtener lista de partes
     async getPartes(accessToken: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/partes', {
@@ -196,7 +220,6 @@ class ApiService {
     getBaseUrl(): string {
         return this.baseUrl;
     }
-
 
 
     async getImages(accessToken: string, idOferta: number): Promise<ApiResponse<any>> {

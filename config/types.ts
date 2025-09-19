@@ -24,7 +24,7 @@ export interface LineaOferta {
     ppcl_DescripArticulo: string | null; // Assuming it would be a string if not null
     ppcl_cantidad: number | null;
     ppcl_UnidadMedida: string | null; // Assuming it would be a string if not null
-    ocl_tipoUnidad : string | null;
+    ocl_tipoUnidad: string | null;
     ppcl_Certificado: number;
     ppcc_observaciones: string | null;
 }
@@ -161,4 +161,19 @@ export interface WorkerParte {
     idParte: number;
     idTrabajador: string;
     nombreTrabajador: string
+}
+
+export interface Desplazamiento {
+    id: number
+    matricula: string
+    distancia: number
+    fecha: string
+}
+
+export interface ManoDeObra {
+    idManoObra: number
+    accion: string
+    precio: number
+    unidades: number
+    fecha: string
 }

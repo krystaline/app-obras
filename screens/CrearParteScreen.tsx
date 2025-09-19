@@ -253,7 +253,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                 />
             </View>
 
-            {/* Submit Button */}
+            {/* signature Button */}
             <TouchableOpacity
                 style={[styles.loginButton]} // Apply disabled style
                 onPress={showSignaturePad}

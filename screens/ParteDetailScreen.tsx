@@ -153,7 +153,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
                     }
                 })
             }}>
-                <Text style={styles.generatePdfButtonText}>Generar Parte en PDF</Text>
+                <Text style={styles.generatePdfButtonText}>Generar y enviar Parte en PDF</Text>
             </TouchableOpacity>
             {/* Puedes mostrar la firma si la tienes y es una imagen base64 */}
             {/* {parteDetails.signature && (

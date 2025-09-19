@@ -1,7 +1,6 @@
 // InfoOfertasScreen.tsx
 import {
     Alert,
-    Button,
     FlatList,
     Image, Modal,
     RefreshControl,
@@ -26,7 +25,6 @@ type Tip = {
     id: number | undefined;
     image_name: string;
 };
-
 type InfoOfertaProps = StackScreenProps<MainTabParamList, 'InfoOferta'>; // Removed `parte: ParteData` from here
 export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Removed `oferta` from destructuring props
     const {idOferta} = route.params as { idOferta: number }; // Extract oferta from route.params
@@ -190,6 +188,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
     const idPartes = Object.keys(groupedAndStatusLineas).map(Number).sort((a, b) => a - b);
 
 
+    // @ts-ignore
     return (
         <ScrollView style={styles.container}
                     refreshControl={
@@ -228,6 +227,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                 <TouchableOpacity style={styles.addImageButton} onPress={enviarImagen}>
                     <Text style={styles.addImageText}>➕ Agregar</Text>
                 </TouchableOpacity>
+                <Text>{imagenes?.length > 0 ? "" : "No hay imagenes"}</Text>
                 <FlatList
                     // @ts-ignore
                     data={imagenes}
@@ -268,10 +268,13 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                         )}
                     </View>
                 </Modal>
+                {/*
+
                 <TouchableOpacity style={styles.seeAllImagesButton} onPress={() => {
                 }}>
                     <Text style={styles.label}>Ver todas las imágenes</Text>
                 </TouchableOpacity>
+                  */}
             </View>
 
 

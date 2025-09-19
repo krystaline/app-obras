@@ -1,5 +1,5 @@
-// MainScreen.tsx (No hay cambios funcionales significativos aquí por la limitación del backend)
-import React, {useState} from 'react';
+// MainScreen.tsx
+import React, {useState, useEffect, useCallback} from 'react';
 import {
     View,
     Text,
@@ -15,119 +15,188 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {MainTabParamList, RootStackParamList} from '../App';
 import {Ionicons} from "@expo/vector-icons";
 import {apiService} from "../config/apiService";
-import {Oferta} from "../config/types"; // Importa tu RootStackParamList
+import {Oferta} from "../config/types";
 
-type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartes'> & {
-    navigation: StackScreenProps<RootStackParamList>['navigation']; // Para acceder al RootStack
+type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartesMO'> & {
+    navigation: StackScreenProps<RootStackParamList>['navigation'];
 };
+
 
 export default function MainScreen({route, navigation}: MainScreenProps) {
     const {user, accessToken} = route.params;
 
-    const [ofertas, setOfertas] = useState<Oferta[]>([]);
+    // Estado para controlar qué lista se muestra
+    const [listType, setListType] = useState<'ofertas' | 'partes' | 'incidencias'>('ofertas');
+
+    // El resto de tus estados, adaptados a la lógica dual
+    const [data, setData] = useState<Oferta[]>([]);
     const [refreshing, setRefreshing] = useState(false);
-    const [filteredOfertas, setFilteredOfertas] = useState<Oferta[]>([]);
+    const [filteredData, setFilteredData] = useState<Oferta[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
 
-    const fetchOfertas = React.useCallback(async () => {
+    // Función para obtener la data (Ofertas o Partes)
+    const fetchData = useCallback(async () => {
         setRefreshing(true);
         setLoading(true);
-        const response = await apiService.getOfertas(accessToken);
+        let response;
+        response = await apiService.getOfertas(accessToken);
+
         if (response.success && response.data) {
-            setOfertas(response.data);
-            setFilteredOfertas(response.data);
+            setData(response.data);
+            setFilteredData(response.data);
         } else {
-            Alert.alert("Error", response.error || "No se pudieron cargar las ofertas.");
+            Alert.alert("Error", response.error || "No se pudieron cargar los datos.");
         }
         setRefreshing(false);
         setLoading(false);
-    }, [accessToken]);
+    }, [accessToken, listType]);
 
-    React.useEffect(() => {
-        fetchOfertas();
-    }, [fetchOfertas]);
+    // Lógica para reaccionar a cambios en el tipo de lista o en el foco de la pantalla
+    useEffect(() => {
+        fetchData();
+        // Listener para cuando se regrese a esta pantalla (por ejemplo, desde el menú)
+        const unsubscribe = navigation.addListener('focus', () => {
+            if (route.params?.listType && route.params.listType !== listType) {
+                setListType(route.params.listType as 'ofertas' | 'partes');
+                // Limpia el parámetro para evitar cambios inesperados en futuros focos
+                navigation.setParams({listType: undefined});
+            }
+        });
 
-    React.useEffect(() => {
+        return unsubscribe;
+    }, [navigation, route.params?.listType, listType, fetchData]);
+
+    useEffect(() => {
         if (searchQuery) {
-            const filtered = ofertas.filter(oferta =>
-                oferta.descripcion?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                String(oferta.idOferta).includes(searchQuery) ||
-                oferta.idProyecto?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                oferta.cliente?.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setFilteredOfertas(filtered);
+            const filtered = data.filter(item => {
+                return item.descripcion?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    String(item.idOferta).includes(searchQuery) ||
+                    item.idProyecto?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    item.cliente?.toLowerCase().includes(searchQuery.toLowerCase());
+            });
+            setFilteredData(filtered);
         } else {
-            setFilteredOfertas(ofertas);
+            setFilteredData(data);
         }
-    }, [searchQuery, ofertas]);
+    }, [searchQuery, data]);
 
-    // Esta función maneja la navegación a la pantalla de detalle de oferta, no de parte
-    const handleSelectOferta = (oferta: Oferta) => {
-        // Podrías navegar a una pantalla de detalles de oferta si la tienes
-        // o usar esta pantalla para seleccionar un parte existente si tuvieras la lista de partes.
-        // Por ahora, solo es un marcador.
-        navigation.navigate('InfoOferta', {
-            idOferta: oferta.idOferta,
-            accessToken: accessToken,
-            user: user,
-            oferta: oferta
-        })
-        //
-        //Si tuvieras una lista de Partes aquí, podrías navegar a ParteDetailScreen.
-        //Por ahora, puedes ir a 'Todas las Líneas' para crear un parte nuevo.`);
+    const handleSelectItem = (item: Oferta) => {
+        if (listType === 'ofertas') {
+            navigation.navigate('InfoOferta', {
+                idOferta: (item as Oferta).idOferta,
+                accessToken,
+                user,
+                oferta: (item as Oferta)
+            });
+        } else {
+            navigation.navigate('InfoParteMO', {
+                idOferta: (item as Oferta).idOferta,
+                accessToken: accessToken,
+                user: user,
+                oferta: (item as Oferta)
+            });
+        }
+    };
+
+    // Función para renderizar el ítem de la lista según el tipo
+    const renderItem = ({item}: { item: Oferta }) => {
+        // UI para una Oferta
+        return (
+            <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectItem(item)}>
+                <View style={styles.itemHeader}>
+                    <Text style={styles.itemTitle}>{item.descripcion}</Text>
+                    <View
+                        style={[styles.statusBadge, item.status === 'activa' ? styles.statusActive : styles.statusInactive]}>
+                        <Text style={styles.statusText}>{item.status}</Text>
+                    </View>
+                </View>
+                <Text style={styles.itemDetails}>ID Oferta: {item.idOferta} | Proyecto: {item.idProyecto}</Text>
+                <Text style={styles.itemDetails}>Cliente: {item.cliente || 'N/A'}</Text>
+                <Text style={styles.itemDetails}>Fecha: {item.fecha?.substring(0, 10)}</Text>
+            </TouchableOpacity>
+        );
     };
 
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#007bff"/>
-                <Text style={styles.loadingText}>Cargando ofertas...</Text>
+                <Text style={styles.loadingText}>Cargando {listType === 'ofertas' ? 'ofertas' : 'partes'}...</Text>
             </View>
         );
     }
 
+    function renderHeader(headerType: string) {
+        if (headerType == "ofertas")
+            return (
+                <View style={styles.header}>
+                    <Text
+                        style={styles.headerTitle}>
+                        Ofertas de diseño
+                    </Text>
+                    <Text style={styles.headerSubtitle}>Selecciona un proyecto</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
+                                      style={styles.menuButton}>
+                        <Ionicons name="menu" size={30} color="#fff"/>
+                    </TouchableOpacity>
+                </View>
+            )
+        else if (headerType == "partes") {
+            return (
+                <View style={[styles.header, styles.headerPartesMO]}>
+                    <Text
+                        style={styles.headerTitle}>
+                        Partes mano de obra
+                    </Text>
+                    <Text style={styles.headerSubtitle}>Selecciona un proyecto</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
+                                      style={styles.menuButton}>
+                        <Ionicons name="menu" size={30} color="#fff"/>
+                    </TouchableOpacity>
+                </View>
+            )
+
+        } else {
+            return (
+                <View style={[styles.header, styles.headerIncidencias]}>
+                    <Text
+                        style={styles.headerIncidenciasTitle}>
+                        Incidencias
+                    </Text>
+                    <Text style={styles.headerIncidenciasSubtitle}>Selecciona una incidencia</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
+                                      style={styles.menuButton}>
+                        <Ionicons name="menu" size={30} color="#fff"/>
+                    </TouchableOpacity>
+                </View>
+            )
+
+        }
+
+    }
+
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Hola, {user.displayName}</Text>
-                <Text style={styles.headerSubtitle}>Tus ofertas y partes recientes</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
-                                  style={styles.menuButton}>
-                    <Ionicons name="menu" size={30} color="#fff"/>
-                </TouchableOpacity>
-            </View>
+            {renderHeader(listType)}
             <TextInput
                 style={styles.searchBar}
-                placeholder="Buscar ofertas..."
+                placeholder={`Buscar ${listType}...`}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
             />
             <FlatList
-                data={filteredOfertas}
-                keyExtractor={(item) => String(item.idOferta)}
-                renderItem={({item}) => (
-                    <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectOferta(item)}>
-                        <View style={styles.itemHeader}>
-                            <Text style={styles.itemTitle}>{item.descripcion}</Text>
-                            <View
-                                style={[styles.statusBadge, item.status === 'activa' ? styles.statusActive : styles.statusInactive]}>
-                                <Text style={styles.statusText}>{item.status}</Text>
-                            </View>
-                        </View>
-                        <Text style={styles.itemDetails}>ID Oferta: {item.idOferta} | Proyecto: {item.idProyecto}</Text>
-                        <Text style={styles.itemDetails}>Cliente: {item.cliente || 'N/A'}</Text>
-                        <Text style={styles.itemDetails}>Fecha: {item.fecha?.substring(0, 10)}</Text>
-                    </TouchableOpacity>
-                )}
+                data={filteredData}
+                keyExtractor={(item) => String('idOferta' in item ? item.idOferta : "")}
+                renderItem={renderItem}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={fetchOfertas} colors={["#00ffa6"]}/>
+                    <RefreshControl refreshing={refreshing} onRefresh={fetchData} colors={["#00ffa6"]}/>
                 }
                 ListEmptyComponent={() => (
                     <View style={styles.emptyListContainer}>
-                        <Text style={styles.emptyListText}>No hay ofertas disponibles.</Text>
-                        <TouchableOpacity onPress={fetchOfertas} style={styles.refreshButton}>
+                        <Text style={styles.emptyListText}>No hay {listType} disponibles.</Text>
+                        <TouchableOpacity onPress={fetchData} style={styles.refreshButton}>
                             <Text style={styles.refreshButtonText}>Recargar</Text>
                         </TouchableOpacity>
                     </View>
@@ -136,7 +205,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
         </View>
     );
 }
-
+// El resto de los estilos se mantienen igual
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -162,15 +231,36 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 20,
         alignItems: 'center',
         position: 'relative',
+        color: "#ffffff",
+
+    },
+    headerPartesMO: {
+        backgroundColor: '#5bbd6f',
+        color: "#ffffff",
+
+    },
+    headerIncidencias: {
+        backgroundColor: '#fada3a',
+        color: 'red'
+    },
+    headerIncidenciasSubtitle: {
+        fontSize: 18,
+        color: "#737373",
+    },
+    headerIncidenciasTitle: {
+        fontSize: 28,
+        fontWeight: "bold",
+        marginBottom: 4,
+        color: '#000'
     },
     headerTitle: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: "bold",
-        color: "#ffffff",
         marginBottom: 4,
+        color: '#fff',
     },
     headerSubtitle: {
-        fontSize: 16,
+        fontSize: 18,
         color: "#e0e0e0",
     },
     menuButton: {
