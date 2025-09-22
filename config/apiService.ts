@@ -164,7 +164,6 @@ class ApiService {
         })
     }
 
-    // todo
     async createParteMO(accessToken: string, data: ParteMOEnviar): Promise<ApiResponse<any>> {
         console.log(data)
         return this.makeRequest(`/api/partesMO/new`, {

@@ -36,6 +36,7 @@ export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
         setRefreshing(true); // Inicia el estado de refrescando
         console.log("Fetching partes of oferta", idOferta);
         apiService.getPartesMO(idOferta, accessToken).then(response => {
+            console.log(response.data)
             setPartes(response.data);
         }).catch(error => {
             console.error("Error fetching partes:", error);
@@ -62,7 +63,7 @@ export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
             }}>
                 <Ionicons style={styles.iconBadge} name={'briefcase-outline'}></Ionicons>
                 <View style={styles.parteMOInfoContainer}>
-                    <Text style={styles.itemTitle}>{item.idProyecto}</Text>
+                    <Text style={styles.itemTitle}>{item.accion}</Text>
                     <Text style={styles.itemDetails}>{item.creation_date}</Text>
                 </View>
                 <Text
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     refreshButton: {
-        backgroundColor: '#5BBDB3',
+        backgroundColor: '#5bbd6f',
         paddingVertical: 10,
         paddingHorizontal: 15,
         borderRadius: 8,

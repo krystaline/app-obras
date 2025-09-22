@@ -160,7 +160,7 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
     const handleMOPress = (m: ManoDeObra) => {
         Alert.alert(
             "Eliminar M",
-            `¿Estás seguro de que quieres eliminar el desplazamiento con matrícula ${m.id}?`,
+            `¿Estás seguro de que quieres eliminar el desplazamiento con matrícula ${m.idManoObra}?`,
             [
                 {
                     text: "Cancelar",
@@ -168,7 +168,7 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
                 },
                 {
                     text: "Eliminar",
-                    onPress: () => handleRemoveDesplazamiento(m.id),
+                    onPress: () => handleRemoveDesplazamiento(m.idManoObra),
                     style: "destructive"
                 }
             ],
@@ -212,7 +212,7 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
     const renderManosDeObra = (manos: ManoDeObra[]) => {
         return manos.map((m, index) => (
             // Envuelve todo el componente con TouchableOpacity
-            <TouchableOpacity key={m.id} onPress={() => handleMOPress(m)}>
+            <TouchableOpacity key={m.idManoObra} onPress={() => handleMOPress(m)}>
                 <View style={styles.desplazamientoItem}>
                     <Text style={styles.boldText}>tuki {m.accion}</Text>
                     {/* Puedes mantener o quitar el botón de la papelera si quieres.
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     submitButton: {
-        backgroundColor: '#3EB1A5',
+        backgroundColor: '#5bbd6f',
     },
     submitButtonText: {
         color: 'white',
