@@ -177,3 +177,11 @@ export interface ManoDeObra {
     unidades: number
     fecha: string
 }
+
+export interface Material {
+    idArticulo : string
+    descripcion : string
+    cantidad : number
+    precio : number
+    lote : string
+}

@@ -8,7 +8,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
 import MenuScreen from './screens/MenuScreen';
-import {Desplazamiento, LineaOferta, ManoDeObra, Oferta} from "./config/types";
+import {Desplazamiento, LineaOferta, ManoDeObra, Material, Oferta} from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
 import CrearParteScreen from "./screens/CrearParteScreen";
@@ -19,6 +19,7 @@ import InfoParteMO from './screens/partesManoObra/InfoPartesMOScreen';
 import CrearParteMOScreen from "./screens/partesManoObra/NewParteMOScreen";
 import CrearDesplazamientoScreen from "./screens/partesManoObra/CrearDesplazamientoScreen";
 import CrearMOScreen from "./screens/partesManoObra/CrearMOScreen";
+import AgregarMaterialScreen from "./screens/partesManoObra/AgregarMaterialScreen";
 
 type Parte = {
     id: number,
@@ -50,7 +51,14 @@ export type RootStackParamList = {
 export type MainTabParamList = {
     ListarPartesMO: { user: any; accessToken: string; listType?: 'ofertas' | 'partes' | 'incidencias'; };
     CrearParte: { user: any; accessToken: string, lineas: LineaOferta[], oferta: Oferta, proyecto: string };
-    CrearParteMO: { user: any; accessToken: string, oferta: Oferta, proyecto: string, nuevoDesplazamiento?: any };
+    CrearParteMO: {
+        user: any;
+        accessToken: string,
+        oferta: Oferta,
+        proyecto: string,
+        nPartes: number,
+        nuevoDesplazamiento?: any
+    };
     InfoOferta: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
     InfoParteMO: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
     InfoLinea: { user: any; accessToken: string; linea: LineaOferta, idParte: number }
@@ -59,7 +67,11 @@ export type MainTabParamList = {
     CrearDesplazamiento: {
         onSave: (desplazamiento: Desplazamiento) => void;
     };
-    CrearMO:{
+    AgregarMaterial: {
+        onSave: (material: Material) => void;
+        accessToken: (string)
+    };
+    CrearMO: {
         onSave: (manodeobra: ManoDeObra) => void
     }
 }
@@ -131,6 +143,8 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                         oferta: Oferta,
                         proyecto: string
                     }
+                    const {nPartes} = props.route.params as { nPartes: number };
+
                     return (
                         <CrearParteMOScreen
                             {...props}
@@ -141,6 +155,7 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                                     user,
                                     accessToken,
                                     oferta,
+                                    nPartes,
                                     proyecto
                                 },
                             }}
@@ -225,7 +240,10 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                     )
                 }}
             </MainTabStack.Screen>
-            <MainTabStack.Screen name="CrearDesplazamiento" options={{presentation: 'modal'}} component={CrearDesplazamientoScreen}/>
+            <MainTabStack.Screen name="CrearDesplazamiento" options={{presentation: 'modal'}}
+                                 component={CrearDesplazamientoScreen}/>
+            <MainTabStack.Screen name="AgregarMaterial" options={{presentation: 'modal'}}
+                                 component={AgregarMaterialScreen}/>
             <MainTabStack.Screen name="CrearMO" options={{presentation: 'modal'}} component={CrearMOScreen}/>
 
             <MainTabStack.Screen name="AsignarTrabajadoresScreen">

@@ -63,8 +63,10 @@ export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
             }}>
                 <Ionicons style={styles.iconBadge} name={'briefcase-outline'}></Ionicons>
                 <View style={styles.parteMOInfoContainer}>
-                    <Text style={styles.itemTitle}>{item.accion}</Text>
-                    <Text style={styles.itemDetails}>{item.creation_date}</Text>
+                    <Text style={styles.itemTitle}>
+                        {item.accion?.length > 20 ? item.accion.substring(0, 20) + '...' : item.accion}
+                    </Text>
+                    <Text style={styles.itemDetails}>{item.creation_date.replace("T", " - ")}</Text>
                 </View>
                 <Text
                     style={[styles.statusBadge, item.estado === 'pendiente' ? styles.pendingBadge : item.estado === 'validado' ? styles.unpendingBadge : styles.cancelledBadge]}><Text
@@ -110,7 +112,8 @@ export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
                                           user: user,
                                           proyecto: oferta.idProyecto,
                                           oferta: oferta,
-                                          accessToken: accessToken
+                                          accessToken: accessToken,
+                                          nPartes: partes.length+1
                                       })}><Text>
                     Crear Parte ➕</Text></TouchableOpacity>
                 <FlatList

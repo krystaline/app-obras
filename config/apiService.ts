@@ -8,12 +8,12 @@ const getBaseUrl = () => {
     if (__DEV__) {
         // En desarrollo
         if (Platform.OS === 'android') {
-            return 'http://10.0.2.104:8082';
+            return 'http://10.0.2.114:8082';
         } else if (Platform.OS === 'ios') {
             console.log("ESTOY EN IOS")
-            return 'http://10.0.2.104:8082';
+            return 'http://10.0.2.114:8082';
         } else {
-            return 'http://192.168.0.104:8082';
+            return 'http://192.168.0.114:8082';
         }
     } else {
         // En producción
@@ -98,6 +98,15 @@ class ApiService {
 
     async getLastPartId(accessToken: string): Promise<ApiResponse<any>> {
         return this.makeRequest('/api/partes/lastId', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+    }
+
+    async getMateriales(accessToken: string): Promise<ApiResponse<any>>{
+        return this.makeRequest('/api/materiales', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
