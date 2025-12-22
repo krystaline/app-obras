@@ -46,7 +46,8 @@
     "react-native-select-dropdown": "^4.0.1",
     "react-native-signature-canvas": "^4.7.4",
     "react-native-web": "^0.21.0",
-    "react-native-webview": "13.15.0"
+    "react-native-webview": "13.15.0",
+    "@react-native-community/datetimepicker": "8.4.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

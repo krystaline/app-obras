@@ -1,35 +1,67 @@
 // CrearDesplazamientoScreen.tsx
-import React, {useState, useLayoutEffect} from 'react'; // Importar useLayoutEffect
-import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity} from 'react-native';
+import React, {useState, useLayoutEffect} from 'react';
+import {
+    View,
+    Text,
+    TextInput,
+    StyleSheet,
+    Alert,
+    TouchableOpacity,
+    Platform // Importante para detectar el SO
+} from 'react-native';
 import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList} from "../../App"; // Asegúrate de que la ruta a MainTabParamList sea correcta
+import {MainTabParamList} from "../../App";
+// Importación unificada del DatePicker
+import RNDateTimePicker, {DateTimePickerEvent} from "@react-native-community/datetimepicker";
 
 type CrearDesplazamientoScreenProps = StackScreenProps<MainTabParamList, 'CrearDesplazamiento'>;
 
 export default function CrearDesplazamientoScreen({navigation, route}: CrearDesplazamientoScreenProps) {
+    // Estados
     const [matricula, setMatricula] = useState('');
     const [distancia, setDistancia] = useState('');
+
+    // Estado para el objeto Date (necesario para el componente Picker)
+    const [date, setDate] = useState(new Date());
+    // Estado para el string que envías al guardar (YYYY-MM-DD)
     const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+
+    // Controla si se muestra o no el calendario
+    const [showDatePicker, setShowDatePicker] = useState(false);
+
     const onSave = route.params?.onSave;
 
-    // Configura las opciones de navegación aquí para la modal
     useLayoutEffect(() => {
         navigation.setOptions({
-            // Opcional: Si quieres un botón de "Cancelar" explícito en la cabecera
             headerLeft: () => (
                 <TouchableOpacity onPress={() => {
-                    // Al cancelar, simplemente volvemos atrás sin pasar datos
                     navigation.goBack();
                 }} style={styles.cancelButtonHeader}>
                     <Text style={styles.cancelButtonHeaderText}>Cancelar</Text>
                 </TouchableOpacity>
             ),
-            // Opcional: Si quieres un título diferente en la cabecera
             title: 'Detalles del Desplazamiento',
-            // Podrías ocultar la cabecera si el diseño de tu modal no la necesita
-            // headerShown: false,
         });
     }, [navigation]);
+
+    // --- Lógica del DatePicker ---
+    const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
+        const currentDate = selectedDate || date;
+
+        // En Android, el picker se cierra automáticamente.
+        // En iOS, a veces queremos mantenerlo abierto o cerrarlo según el estilo.
+        // Aquí lo cerramos al seleccionar para simplificar.
+        setShowDatePicker(Platform.OS === 'ios');
+
+        setDate(currentDate);
+        // Actualizamos el string que se muestra y se guarda
+        setFecha(currentDate.toISOString().split('T')[0]);
+    };
+
+    const showDatepicker = () => {
+        setShowDatePicker(true);
+    };
+    // -----------------------------
 
     const handleSave = () => {
         if (!matricula || !distancia) {
@@ -41,19 +73,15 @@ export default function CrearDesplazamientoScreen({navigation, route}: CrearDesp
             id: Date.now(),
             matricula,
             distancia: parseFloat(distancia),
-            fecha,
+            fecha, // Usamos el string formateado
         };
 
-        // Si la función onSave existe, la llamamos con el nuevo desplazamiento
         if (onSave) {
             onSave(nuevoDesplazamiento);
         }
-
-        // Finalmente, cerramos el modal
         navigation.goBack();
     };
 
-    // El botón de cancelar si no lo pones en la cabecera
     const handleCancel = () => {
         Alert.alert(
             "Descartar Desplazamiento",
@@ -62,9 +90,7 @@ export default function CrearDesplazamientoScreen({navigation, route}: CrearDesp
                 {text: "Cancelar", style: "cancel"},
                 {
                     text: "Descartar",
-                    onPress: () => {
-                        navigation.goBack(); // Simplemente vuelve atrás
-                    },
+                    onPress: () => navigation.goBack(),
                     style: "destructive"
                 }
             ],
@@ -94,20 +120,24 @@ export default function CrearDesplazamientoScreen({navigation, route}: CrearDesp
             />
 
             <Text style={styles.label}>Fecha:</Text>
-            <TextInput
-                style={styles.input}
-                value={fecha}
-                textContentType={'dateTime'} // Ayuda al teclado a mostrar el formato de fecha
-                onChangeText={setFecha}
-                placeholder="YYYY-MM-DD"
+
+
+            <RNDateTimePicker
+                themeVariant={'light'}
+                testID="dateTimePicker"
+                maximumDate={new Date()}
+                value={date}
+                mode={'date'}
+                is24Hour={true}
+                display="spinner"
+                onChange={onChangeDate}
             />
+
 
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                 <Text style={styles.saveButtonText}>Guardar</Text>
             </TouchableOpacity>
 
-            {/* Botón de cancelar opcional si no usas headerLeft */}
-            {/* Si usas headerLeft, puedes quitar este botón para evitar redundancia */}
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
             </TouchableOpacity>
@@ -118,12 +148,8 @@ export default function CrearDesplazamientoScreen({navigation, route}: CrearDesp
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        // paddingTop: 60, // Puedes ajustar esto si la cabecera está presente
         padding: 20,
         backgroundColor: '#f8f8f8',
-        // Si quieres que la modal tenga un fondo redondeado en las esquinas
-        // puedes añadir 'borderTopLeftRadius', 'borderTopRightRadius' y usar un modal nativo
-        // pero para la transición de React Navigation, esto es suficiente.
     },
     title: {
         fontSize: 24,
@@ -143,6 +169,22 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 10,
         marginBottom: 15,
+        backgroundColor: 'white', // Añadido para consistencia visual
+    },
+    // Nuevos estilos para el contenedor de la fecha para que se vea igual que los inputs
+    inputDateContainer: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        marginBottom: 15,
+        backgroundColor: 'white',
+        justifyContent: 'center', // Centra el texto verticalmente
+    },
+    inputText: {
+        fontSize: 14,
+        color: 'black',
     },
     saveButton: {
         backgroundColor: '#5bbd6f',
@@ -156,15 +198,15 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
-    cancelButtonHeader: { // Estilos para el botón de cancelar en la cabecera
+    cancelButtonHeader: {
         marginLeft: 15,
         padding: 10,
     },
     cancelButtonHeaderText: {
-        color: '#3EB1A5', // O el color que uses para tus botones de navegación
+        color: '#3EB1A5',
         fontSize: 16,
     },
-    cancelButton: { // Estilos para un botón de cancelar en el cuerpo de la pantalla
+    cancelButton: {
         backgroundColor: 'white',
         padding: 15,
         borderRadius: 8,
