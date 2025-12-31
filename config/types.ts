@@ -44,6 +44,8 @@ export interface LineaPedidoPDF {
 }
 
 export interface ParteImprimirPDF {
+    /**
+     *  ANTIGUO
     nParte: number;
     proyecto: string;
     oferta: string;
@@ -55,9 +57,21 @@ export interface ParteImprimirPDF {
     lineas: LineaPedidoPDF[]; // O LineaPedidoPost[] si es lo que envías
     firma: string; // Base64
     idoferta: number;
-
     pdf: string | null;
-
+ */
+    idOferta: number
+    pdf: string | null
+    idParteERP: number | null
+    proyecto: string
+    oferta: number
+    jefeEquipo: string
+    telefono: string
+    fecha: string
+    contactoObra: string
+    comentarios: string | null
+    lineas: LineaPedidoPDF[]
+    firma: string
+    idParteAPP: number
 }
 
 
@@ -179,9 +193,9 @@ export interface ManoDeObra {
 }
 
 export interface Material {
-    idArticulo : string
-    descripcion : string
-    cantidad : number
-    precio : number
-    lote : string
+    idArticulo: string
+    descripcion: string
+    cantidad: number
+    precio: number
+    lote: string
 }

@@ -1,26 +1,26 @@
 // CrearParteScreen.tsx
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import SignaturePad from "../components/SignaturePad";
 
 import {
     View, Text, TextInput, Button, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator
 } from 'react-native';
-import {RouteProp} from '@react-navigation/native';
-import {StackNavigationProp, StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList} from "../App";
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList } from "../App";
 import {
     apiService,
 } from "../config/apiService";
-import {LineaOferta, LineaPedidoPDF, Oferta, ParteImprimirPDF} from "../config/types";
+import { LineaOferta, LineaPedidoPDF, Oferta, ParteImprimirPDF } from "../config/types";
 
 
 // Define the type for the route prop
 type CrearParteScreenProps = StackScreenProps<MainTabParamList, 'CrearParte'>;
 
 
-export default function CrearParteScreen({route, navigation}: CrearParteScreenProps) {
+export default function CrearParteScreen({ route, navigation }: CrearParteScreenProps) {
     // Destructuring parameters passed from the previous screen
-    const {oferta, proyecto, lineas, user, accessToken} = route.params as {
+    const { oferta, proyecto, lineas, user, accessToken } = route.params as {
         oferta: Oferta,
         proyecto: string, lineas: LineaOferta[], user: any, accessToken: string
     };
@@ -134,18 +134,19 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
 
         // todo aqui tengo que crear el parte que se imprimirá (sin_nombre_app)
         const dataToSend: ParteImprimirPDF = {
-            nParte: lastIdParte!,
             proyecto: proyecto,
-            oferta: oferta.idOferta.toString(),
-            jefe_equipo: user['displayName'],
+            oferta: oferta.idOferta,
+            jefeEquipo: user['displayName'],
             telefono: user['mobilePhone'],
             fecha: new Date().toISOString().slice(0, 10),
-            contacto_obra: oferta.cliente!,
+            contactoObra: oferta.cliente!,
             comentarios: comments,
             lineas: lineasParaBackend,
-            idoferta: oferta.idOferta,
+            idOferta: oferta.idOferta,
             firma: signature,
-            pdf: null
+            pdf: null,
+            idParteAPP: lastIdParte!,
+            idParteERP: null,
         }
 
 
@@ -168,7 +169,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
 
     return (
         <ScrollView style={styles.container}
-                    scrollEnabled={isScrollingEnabled}>
+            scrollEnabled={isScrollingEnabled}>
             {/* Section: Displayed Project Data */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Datos del Proyecto</Text>
@@ -187,7 +188,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
 
             </View>
 
-            <View style={styles.separator}/>
+            <View style={styles.separator} />
 
             {/* Section: Line Items Input */}
             <View style={styles.section}>
@@ -195,48 +196,48 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
 
                 {/* Maps through each line to create input fields */}
                 {lineas.map((linea) => {
-                        console.log(linea)
+                    console.log(linea)
 
-                        if (linea.ocl_Cantidad === 0 || linea.ppcl_cantidad < linea.ocl_Cantidad) {
-                            return (
-                                <View key={linea.ocl_idlinea} style={styles.lineItem}>
-                                    {/* Displays the line name */}
-                                    <Text style={styles.lineName}>{linea.ocl_Descrip}</Text>
-                                    {/* Input field for the quantity of the line */}
-                                    <TextInput
-                                        style={styles.quantityInput}
-                                        keyboardType="numeric"
-                                        placeholder="Cantidad"
-                                        value={lineQuantities[linea.ocl_idlinea ? linea.ocl_idlinea : ""] || ''}
-                                        onChangeText={(value) => handleQuantityChange(linea.ocl_idlinea ? linea.ocl_idlinea : "", value)}
-                                    />
-                                    {/* Displays the unit of measurement for the quantity */}
-                                    <Text
-                                        style={styles.unitText}>{linea.ppcl_cantidad ? linea.ppcl_cantidad : 0} / {linea.ocl_UnidadesPres}{linea.ocl_tipoUnidad}</Text>
-                                </View>
-                            )
-                        } else {
-                            return null
-                        }
+                    if (linea.ocl_Cantidad === 0 || linea.ppcl_cantidad < linea.ocl_Cantidad) {
+                        return (
+                            <View key={linea.ocl_idlinea} style={styles.lineItem}>
+                                {/* Displays the line name */}
+                                <Text style={styles.lineName}>{linea.ocl_Descrip}</Text>
+                                {/* Input field for the quantity of the line */}
+                                <TextInput
+                                    style={styles.quantityInput}
+                                    keyboardType="numeric"
+                                    placeholder="Cantidad"
+                                    value={lineQuantities[linea.ocl_idlinea ? linea.ocl_idlinea : ""] || ''}
+                                    onChangeText={(value) => handleQuantityChange(linea.ocl_idlinea ? linea.ocl_idlinea : "", value)}
+                                />
+                                {/* Displays the unit of measurement for the quantity */}
+                                <Text
+                                    style={styles.unitText}>{linea.ppcl_cantidad ? linea.ppcl_cantidad : 0} / {linea.ocl_UnidadesPres}{linea.ocl_tipoUnidad}</Text>
+                            </View>
+                        )
+                    } else {
+                        return null
                     }
+                }
                 )}
 
 
                 <Text>Líneas adicionales</Text>
                 <View key={3} style={styles.lineItem}>
                     <TextInput style={styles.textinput}
-                               placeholder="Descripción actividad"></TextInput>
+                        placeholder="Descripción actividad"></TextInput>
 
                     <TextInput
                         style={styles.quantityInput2}
                         keyboardType="numeric"
                         placeholder="Cantidad"
                     />
-                    <Text style={styles.unitText}>{}</Text>
+                    <Text style={styles.unitText}>{ }</Text>
                 </View>
             </View>
 
-            <View style={styles.separator}/>
+            <View style={styles.separator} />
 
             {/* Section: Comments Input */
             }
@@ -283,7 +284,7 @@ export default function CrearParteScreen({route, navigation}: CrearParteScreenPr
                     disabled={signature.length === 0}
                 >
                     {loading ? (
-                        <ActivityIndicator size="small" color="white"/>
+                        <ActivityIndicator size="small" color="white" />
                     ) : (
                         <Text style={styles.submitButtonText}>Guardar Parte</Text>
                     )}
@@ -361,7 +362,7 @@ const styles = StyleSheet.create({
         padding: 15,
         marginBottom: 5,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,

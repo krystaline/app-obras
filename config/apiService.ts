@@ -1,7 +1,7 @@
 // services/apiService.ts
-import {Platform} from 'react-native';
-import {ApiResponse, ParteImprimirPDF, Worker} from "./types";
-import {ParteMOEnviar} from "../screens/partesManoObra/NewParteMOScreen";
+import { Platform } from 'react-native';
+import { ApiResponse, ParteImprimirPDF, Worker } from "./types";
+import { ParteMOEnviar } from "../screens/partesManoObra/NewParteMOScreen";
 
 // Configuración de la API
 const getBaseUrl = () => {
@@ -11,7 +11,7 @@ const getBaseUrl = () => {
             return 'http://10.0.2.114:8082';
         } else if (Platform.OS === 'ios') {
             console.log("ESTOY EN IOS")
-            return 'http://10.0.2.114:8082';
+            return 'http://10.0.2.106:8082';
         } else {
             return 'http://192.168.0.114:8082';
         }
@@ -105,7 +105,7 @@ class ApiService {
         });
     }
 
-    async getMateriales(accessToken: string): Promise<ApiResponse<any>>{
+    async getMateriales(accessToken: string): Promise<ApiResponse<any>> {
         return this.makeRequest('/api/materiales', {
             method: 'GET',
             headers: {
