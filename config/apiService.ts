@@ -123,11 +123,19 @@ class ApiService {
         });
     }
 
+    async getLineasParte(idOferta: number, accessToken: string): Promise<ApiResponse<any[]>> {
+        return this.makeRequest(`/api/${idOferta}/lineas`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+    }
 
     // Crear un nuevo parte
     async createParte(parteData: ParteImprimirPDF, accessToken: string): Promise<ApiResponse<any>> {
-        console.log('partepost', JSON.stringify(parteData));
-        return this.makeRequest('/api/partes', {
+        console.log('partepost', JSON.stringify(parteData.idParteAPP));
+        return this.makeRequest('/api/partes/crearNUEVO', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -215,8 +223,8 @@ class ApiService {
         });
     }
 
-    async getPartePdf(parteId: number, accessToken: string): Promise<ApiResponse<any>> {
-        return this.makeRequest(`/api/partes/parte/${parteId}`, {
+    async getPartePdf(idParteAPP: number, accessToken: string): Promise<ApiResponse<any>> {
+        return this.makeRequest(`/api/partes/parte/${idParteAPP}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,

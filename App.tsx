@@ -1,19 +1,19 @@
 // App.tsx
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {StackScreenProps} from '@react-navigation/stack';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StackScreenProps } from '@react-navigation/stack';
 
 // Importa tus pantallas
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
 import MenuScreen from './screens/MenuScreen';
-import {Desplazamiento, LineaOferta, ManoDeObra, Material, Oferta} from "./config/types";
+import { Desplazamiento, LineaOferta, LineasPorParte, ManoDeObra, Material, Oferta } from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
 import CrearParteScreen from "./screens/CrearParteScreen";
 import ParteDetail from "./screens/ParteDetailScreen";
-import {Text} from "react-native";
+import { Text } from "react-native";
 import AsignarTrabajadoresScreen from "./screens/AsignarTrabajadoresScreen";
 import InfoParteMO from './screens/partesManoObra/InfoPartesMOScreen';
 import CrearParteMOScreen from "./screens/partesManoObra/NewParteMOScreen";
@@ -61,9 +61,9 @@ export type MainTabParamList = {
     };
     InfoOferta: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
     InfoParteMO: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
-    InfoLinea: { user: any; accessToken: string; linea: LineaOferta, idParte: number }
-    ParteDetail: { user: any; accessToken: string; parteId: number };
-    AsignarTrabajadoresScreen: { user: any; accessToken: string; parteId: number };
+    InfoLinea: { user: any; accessToken: string; linea: LineaOferta | LineasPorParte, idParteERP: number, idParteAPP: number }
+    ParteDetail: { user: any; accessToken: string; idParteERP: number, idParteAPP: number };
+    AsignarTrabajadoresScreen: { user: any; accessToken: string; parteId: number }; // TODO: cambiar cuando meta trabajadores
     CrearDesplazamiento: {
         onSave: (desplazamiento: Desplazamiento) => void;
     };
@@ -80,9 +80,9 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const MainTabStack = createNativeStackNavigator<MainTabParamList>();
 type MainTabNavigatorProps = StackScreenProps<RootStackParamList, 'MainTab'>;
 
-function MainTabNavigator({route}: MainTabNavigatorProps) {
+function MainTabNavigator({ route }: MainTabNavigatorProps) {
 
-    const {user, accessToken} = route.params;
+    const { user, accessToken } = route.params;
 
     // Aquí, extraemos los parámetros de la ruta MainTab para pasarlos a la pantalla
     const initialParams = (route.params.params as MainTabParamList['ListarPartesMO']) || {};
@@ -114,7 +114,7 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
 
             <MainTabStack.Screen name="CrearParte">
                 {props => {
-                    const {lineas, oferta, proyecto} = props.route.params as {
+                    const { lineas, oferta, proyecto } = props.route.params as {
                         lineas: LineaOferta[],
                         oferta: Oferta,
                         proyecto: string
@@ -139,11 +139,11 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
             </MainTabStack.Screen>
             <MainTabStack.Screen name="CrearParteMO">
                 {props => {
-                    const {oferta, proyecto} = props.route.params as {
+                    const { oferta, proyecto } = props.route.params as {
                         oferta: Oferta,
                         proyecto: string
                     }
-                    const {nPartes} = props.route.params as { nPartes: number };
+                    const { nPartes } = props.route.params as { nPartes: number };
 
                     return (
                         <CrearParteMOScreen
@@ -166,8 +166,9 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
 
             <MainTabStack.Screen name="ParteDetail">
                 {props => {
-                    const {parteId, user, accessToken} = props.route.params as {
-                        parteId: number,
+                    const { idParteERP, idParteAPP, user, accessToken } = props.route.params as {
+                        idParteERP: number,
+                        idParteAPP: number,
                         user: any,
                         accessToken: string
                     };
@@ -178,7 +179,8 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                                 ...props.route,
                                 params: {
                                     ...props.route.params,
-                                    parteId,
+                                    idParteAPP,
+                                    idParteERP,
                                     user,
                                     accessToken,
                                 },
@@ -189,7 +191,7 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
             </MainTabStack.Screen>
             <MainTabStack.Screen name="InfoOferta">
                 {props => {
-                    const {idOferta} = props.route.params as { idOferta: number };
+                    const { idOferta } = props.route.params as { idOferta: number };
                     return (
                         <InfoOferta
                             {...props}
@@ -207,7 +209,7 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
             </MainTabStack.Screen>
             <MainTabStack.Screen name="InfoParteMO">
                 {props => {
-                    const {idOferta} = props.route.params as { idOferta: number };
+                    const { idOferta } = props.route.params as { idOferta: number };
                     return (
                         <InfoParteMO
                             {...props}
@@ -240,15 +242,15 @@ function MainTabNavigator({route}: MainTabNavigatorProps) {
                     )
                 }}
             </MainTabStack.Screen>
-            <MainTabStack.Screen name="CrearDesplazamiento" options={{presentation: 'modal'}}
-                                 component={CrearDesplazamientoScreen}/>
-            <MainTabStack.Screen name="AgregarMaterial" options={{presentation: 'modal'}}
-                                 component={AgregarMaterialScreen}/>
-            <MainTabStack.Screen name="CrearMO" options={{presentation: 'modal'}} component={CrearMOScreen}/>
+            <MainTabStack.Screen name="CrearDesplazamiento" options={{ presentation: 'modal' }}
+                component={CrearDesplazamientoScreen} />
+            <MainTabStack.Screen name="AgregarMaterial" options={{ presentation: 'modal' }}
+                component={AgregarMaterialScreen} />
+            <MainTabStack.Screen name="CrearMO" options={{ presentation: 'modal' }} component={CrearMOScreen} />
 
             <MainTabStack.Screen name="AsignarTrabajadoresScreen">
                 {props => {
-                    const {parteId} = props.route.params as { parteId: number };
+                    const { parteId } = props.route.params as { parteId: number };
                     return (
                         <AsignarTrabajadoresScreen
                             {...props}
@@ -276,12 +278,12 @@ export default function App() {
                 <RootStack.Screen
                     name="Login"
                     component={LoginScreen}
-                    options={{headerShown: false}}
+                    options={{ headerShown: false }}
                 />
                 <RootStack.Screen
                     name="MainTab"
                     component={MainTabNavigator}
-                    options={{headerShown: false}}
+                    options={{ headerShown: false }}
                 />
                 <RootStack.Screen
                     name="Menu"

@@ -10,32 +10,40 @@ import {
     ActivityIndicator,
     TextInput
 } from "react-native";
-import {StackScreenProps} from "@react-navigation/stack";
-import {MainTabParamList} from "../App";
-import React, {useState, useEffect} from "react";
-import {LineaOferta} from "../config/types";
+import { StackScreenProps } from "@react-navigation/stack";
+import { MainTabParamList } from "../App";
+import React, { useState, useEffect } from "react";
+import { LineaOferta, LineasPorParte } from "../config/types";
 
 type InfoLineaProps = StackScreenProps<MainTabParamList, 'InfoLinea'>;
-export default function InfoLinea({route, navigation}: InfoLineaProps) {
-    const {linea} = route.params as { linea: LineaOferta }
+export default function InfoLinea({ route, navigation }: InfoLineaProps) {
+    const { linea } = route.params as { linea: LineaOferta | LineasPorParte }
 
+    const isLineaOferta = (l: LineaOferta | LineasPorParte): l is LineaOferta => {
+        return (l as LineaOferta).ocl_Descrip !== undefined;
+    }
+
+    const descripcion = isLineaOferta(linea) ? linea.ocl_Descrip : linea.descriparticulo;
+    const unidades = isLineaOferta(linea) ? linea.ocl_UnidadesPres : linea.cantidad_total;
+    const cantidad = isLineaOferta(linea) ? linea.ppcl_cantidad : linea.cantidad;
+    const certificado = isLineaOferta(linea) ? linea.ppcl_Certificado : linea.certificado;
 
     return (
         <ScrollView style={styles.container}>
             <Text style={styles.title}>Detalles de la línea</Text>
             <View style={styles.card}>
                 <Text style={styles.value}>Descripción:
-                    <Text style={styles.label}> {linea.ocl_Descrip}</Text>
+                    <Text style={styles.label}> {descripcion}</Text>
                 </Text>
                 <Text style={styles.value}>Unidades:
-                    <Text style={styles.label}> {linea.ocl_UnidadesPres}</Text>
+                    <Text style={styles.label}> {unidades}</Text>
                 </Text>
                 <Text style={styles.value}>Cantidad:
-                    <Text style={styles.label}> {linea.ppcl_cantidad}</Text>
+                    <Text style={styles.label}> {cantidad}</Text>
                 </Text>
             </View>
-            <View style={linea.ppcl_Certificado == 0 ? styles.activityCardNoCert : styles.activityCard}>
-                <Text style={styles.labelBold}>{linea.ppcl_Certificado == 0 ? 'No certificado' : 'Certificado'}</Text>
+            <View style={certificado == 0 ? styles.activityCardNoCert : styles.activityCard}>
+                <Text style={styles.labelBold}>{certificado == 0 ? 'No certificado' : 'Certificado'}</Text>
             </View>
         </ScrollView>
     )
@@ -61,7 +69,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 15,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,
@@ -72,7 +80,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 15,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,

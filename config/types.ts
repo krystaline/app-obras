@@ -19,6 +19,7 @@ export interface LineaOferta {
     ocl_NumBultos: number | null;
     ocl_UnidadesPres: number | null;
     ppcl_IdParte: number | null;
+    idParteAPP?: number | null;
     ppcl_Capitulo: string | null; // Assuming it would be a string if not null
     ppcl_IdArticulo: string | null; // Assuming it would be a string if not null
     ppcl_DescripArticulo: string | null; // Assuming it would be a string if not null
@@ -30,7 +31,7 @@ export interface LineaOferta {
 }
 
 export interface LineaPedidoPDF {
-    id: number;
+    id_linea: number;
     capitulo: number;
     idArticulo: string;
     id_parte: number;
@@ -64,17 +65,19 @@ export interface ParteImprimirPDF {
     idParteERP: number | null
     proyecto: string
     oferta: number
-    jefeEquipo: string
+    jefe_equipo: string
     telefono: string
     fecha: string
-    contactoObra: string
+    contacto_obra: string
     comentarios: string | null
     lineas: LineaPedidoPDF[]
     firma: string
-    idParteAPP: number
+    idParteAPP: number // este SIEMPRE va a ir lleno
+    idProyecto: string | null
 }
 
 
+// TODO: refactorizar para mejor nomenclatura
 export interface LineaOfertaResponse {
     ocl_IdOferta?: number; // Puede ser nulo o indefinido en algunos contextos
     ocl_idlinea: number;
@@ -107,8 +110,9 @@ export interface LineaOfertaResponse {
 
 // Para enviar una línea individual en el array 'lineas' del ParteImprimirPDF
 export interface LineaPartePost {
-    id: number; // ocl_idlinea
-    id_parte: number;
+    id_linea: number; // ocl_idlinea
+    idParteAPP: number | null;
+    idParteERP: number | null;
     id_oferta: number; // ocl_IdOferta
     descripcion: string; // ocl_Descrip
     medida: string; // ¡Cambiado a string | number!
@@ -121,7 +125,10 @@ export interface LineaPartePost {
 
 // Para las líneas que se reciben al obtener un PDF existente (ParteImprimirPDF.lineas)
 export interface LineaPartePDF {
-    id: number; // ID de la línea del parte
+    id: number;
+    id_linea: number; // ID de la línea del parte
+    idParteERP: number | null;
+    idParteAPP: number // SIEMPRE relleno ? 
     DescripArticulo: string; // Descripción de la línea
     cantidad: number; // Unidades puestas en el parte
     UnidadMedida: string; // Unidad de medida (ej: "m", "kg", "unidades")
@@ -130,7 +137,8 @@ export interface LineaPartePDF {
 
 // Para el objeto Parte completo que se recibe del backend al pedir un PDF existente
 export interface ParteResponsePDF {
-    nParte: number;
+    idParteAPP: number;
+    idParteERP: number;
     oferta: string; // Descripción de la oferta
     idOferta: number; // ID de la oferta
     proyecto: string; // ID del proyecto
@@ -198,4 +206,31 @@ export interface Material {
     cantidad: number
     precio: number
     lote: string
+}
+
+export interface Vehiculo {
+    id: number
+    matricula: string
+    descripcion: string
+    modelo: string
+}
+
+
+// este representa la tabla pers_partes_app
+export interface LineasPorParte {
+    idParteERP: number
+    idParteAPP: number
+    revision: number
+    capitulo: number
+    titulo: string
+    idLinea: number
+    idArticulo: string
+    descriparticulo: string
+    unidadmedida: string
+    cantidad: number
+    cantidad_total: number
+    certificado: number
+    fechainsertupdate: string
+    idOferta: number
+    id: number
 }

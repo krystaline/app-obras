@@ -11,14 +11,14 @@ import {
     View,
     Dimensions
 } from "react-native";
-import {StackScreenProps} from "@react-navigation/stack";
-import {MainTabParamList} from "../App";
-import {apiService} from "../config/apiService";
-import React, {useCallback, useState} from "react";
-import {Ionicons} from "@expo/vector-icons";
-import {LineaOferta, Oferta} from "../config/types";
+import { StackScreenProps } from "@react-navigation/stack";
+import { MainTabParamList } from "../App";
+import { apiService } from "../config/apiService";
+import React, { useCallback, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { LineaOferta, LineasPorParte, Oferta } from "../config/types";
 import * as ImagePicker from 'expo-image-picker';
-import {AntDesign} from '@expo/vector-icons'; // Si usas Expo, puedes usar este ícono para cerrar
+import { AntDesign } from '@expo/vector-icons'; // Si usas Expo, puedes usar este ícono para cerrar
 import ImageZoom from 'react-native-image-pan-zoom';
 
 type Tip = {
@@ -26,20 +26,21 @@ type Tip = {
     image_name: string;
 };
 type InfoOfertaProps = StackScreenProps<MainTabParamList, 'InfoOferta'>; // Removed `parte: ParteData` from here
-export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Removed `oferta` from destructuring props
-    const {idOferta} = route.params as { idOferta: number }; // Extract oferta from route.params
-    const {user} = route.params as { user: any }
-    const {accessToken} = route.params as { accessToken: string }
+export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // Removed `oferta` from destructuring props
+    const { idOferta } = route.params as { idOferta: number }; // Extract oferta from route.params
+    const { user } = route.params as { user: any }
+    const { accessToken } = route.params as { accessToken: string }
     const [lineas, setLineas] = useState<LineaOferta[]>()
+    const [lineasAsignadas, setLineasAsignadas] = useState<LineaOferta[]>()
     const [loading, setLoading] = useState(true)
-    const {oferta} = route.params as { oferta: Oferta }
+    const { oferta } = route.params as { oferta: Oferta }
     const [refreshing, setRefreshing] = useState(false)
     const [imagenes, setImagenes] = useState<Tip[]>();
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
 
 
-    const renderImage = ({item}: { item: string }) => {
+    const renderImage = ({ item }: { item: string }) => {
         // 'item' is now a string, e.g., "imagen1.jpg"
         const imageUrl = `${apiService.getBaseUrl()}/api/images/imagenes/${item}`;
         console.log("Image URL to display:", imageUrl);
@@ -53,12 +54,26 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                 }}
             >
                 <Image
-                    source={{uri: imageUrl}}
+                    source={{ uri: imageUrl }}
                     style={styles.image}
                 />
             </TouchableOpacity>
         );
     };
+
+    const fetchLineasAsignadas = useCallback(() => {
+        setRefreshing(true)
+        apiService.getLineasParte(idOferta, accessToken).then(response => {
+            console.log("lineas asignadas", response.data)
+            setLineasAsignadas(response.data);
+        }).catch(error => {
+            console.error("Error fetching projects:", error);
+            Alert.alert("Error", "No se pudieron cargar las líneas del parte."); // Opcional: mostrar un error al usuario
+        }).finally(() => {
+            setLoading(false);
+            setRefreshing(false); // Finaliza el estado de refrescando
+        });
+    }, [idOferta, accessToken])
 
 
     const fetchLineasOferta = useCallback(() => {
@@ -96,12 +111,14 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
 
     React.useEffect(() => {
         fetchLineasOferta(); // Llama a la función al montar el componente
+        fetchLineasAsignadas();
         fetchImagenesOferta();
     }, [fetchLineasOferta, fetchImagenesOferta]); // Dependencia para useEffect
 
     const onRefresh = useCallback(() => {
         fetchLineasOferta(); // Llama a la misma función para refrescar
         fetchImagenesOferta();
+        fetchLineasAsignadas();
     }, [fetchLineasOferta, fetchImagenesOferta]);
 
     if (!lineas && !loading) { // Cambia la condición para mostrar el error solo si no hay líneas y no está cargando
@@ -164,41 +181,44 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
         }
     };
     const groupLineasByParteAndQuantityStatus = (lineas: LineaOferta[]) => {
-        const groupedByParte: { [key: number]: { completed: LineaOferta[], pending: LineaOferta[] } } = {};
+        const groupedByParte: { [key: string]: { completed: LineasPorParte[], pending: LineaOferta[], idParteERP: number, idParteAPP: number } } = {};
 
         lineas.forEach(linea => {
-            const idParte = linea.ppcl_IdParte || 0; // Use 0 for lines without a part
+            const idParteERP = linea.ppcl_IdParte || 0; // Use 0 for lines without a part
+            const idParteAPP = linea.idParteAPP || 0;
 
-            if (!groupedByParte[idParte]) {
-                groupedByParte[idParte] = {completed: [], pending: []};
+            const key = `${idParteERP}-${idParteAPP}`;
+
+            if (!groupedByParte[key]) {
+                groupedByParte[key] = { completed: [], pending: [], idParteERP, idParteAPP };
             }
             // @ts-ignore
             if (linea.ppcl_cantidad <= linea.ocl_UnidadesPres) {
                 console.log("linea completada", linea)
-                groupedByParte[idParte].completed.push(linea);
+                groupedByParte[key].completed.push(linea);
             } else {
-                groupedByParte[idParte].pending.push(linea);
+                groupedByParte[key].pending.push(linea);
             }
         });
 
         return groupedByParte;
     };
 
-    const groupedAndStatusLineas = lineas ? groupLineasByParteAndQuantityStatus(lineas) : {};
-    const idPartes = Object.keys(groupedAndStatusLineas).map(Number).sort((a, b) => a - b);
+    const groupedAndStatusLineas = lineasAsignadas ? groupLineasByParteAndQuantityStatus(lineasAsignadas) : {};
+    const partes = Object.values(groupedAndStatusLineas).sort((a, b) => a.idParteERP - b.idParteERP);
 
 
     // @ts-ignore
     return (
         <ScrollView style={styles.container}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            colors={['#3EB1A5']} // Color del spinner en Android
-                            tintColor={'#3EB1A5'} // Color del spinner en iOS
-                        />
-                    }
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={['#3EB1A5']} // Color del spinner en Android
+                    tintColor={'#3EB1A5'} // Color del spinner en iOS
+                />
+            }
         >
             <Text style={styles.title}>Detalles de la oferta</Text>
             <Ionicons style={styles.arrowBack} name={"arrow-back"} onPress={navigation.goBack}></Ionicons>
@@ -249,7 +269,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                             style={styles.closeButton}
                             onPress={() => setModalVisible(false)}
                         >
-                            <AntDesign name="close" size={24} color="white"/>
+                            <AntDesign name="close" size={24} color="white" />
                         </TouchableOpacity>
                         {selectedImageUri && (
                             // @ts-ignore
@@ -260,7 +280,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                                 imageHeight={Dimensions.get('window').height}
                             >
                                 <Image
-                                    source={{uri: selectedImageUri}}
+                                    source={{ uri: selectedImageUri }}
                                     style={styles.modalImage}
                                     resizeMode="contain"
                                 />
@@ -277,6 +297,22 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                   */}
             </View>
 
+            { /* LINEAS DE LA OFERTA */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Líneas de la Oferta:</Text>
+                {lineas && lineas.length > 0 ? (
+                    lineas.map((linea, index) => (
+                        <View key={index} style={styles.activityCardNoCert}>
+                            <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
+                            <Text style={styles.activityText}>Cantidad: {linea.ocl_UnidadesPres} {linea.ocl_tipoUnidad}</Text>
+                            <Text style={styles.activityText}>ID Actividad: {linea.ocl_IdArticulo}</Text>
+                        </View>
+                    ))
+                ) : (
+                    <Text style={styles.value}>No hay líneas de oferta.</Text>
+                )}
+            </View>
+
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Lineas por parte:</Text>
@@ -288,54 +324,57 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                         lineas: lineas!,
                         proyecto: oferta.descripcion ? oferta.descripcion : "",
                     })}><Text>➕ Crear Parte</Text></TouchableOpacity>
-                {lineas && lineas.length > 0 ? (
-                    idPartes.map((idParte) => (
-                        <TouchableOpacity key={idParte} onPress={() => {
+                {lineasAsignadas && lineasAsignadas.length > 0 ? (
+                    partes.map((parte) => (
+                        <TouchableOpacity key={`${parte.idParteAPP}`} onPress={() => {
                             navigation.navigate('ParteDetail', {
-                                user: user, accessToken: accessToken, parteId: idParte
+                                user: user, accessToken: accessToken, idParteAPP: parte.idParteAPP, idParteERP: parte.idParteERP
                             })
                         }}>
                             <Text
-                                style={styles.groupTitle}>{idParte ? "Grupo parte: " + idParte + "" : "Líneas sin parte"}</Text>
+                                style={styles.groupTitle}>{parte.idParteERP ? "Grupo parte: " + parte.idParteERP + "." : "Líneas sin parte"}</Text>
 
-                            {groupedAndStatusLineas[idParte].completed.length > 0 && (
+                            {parte.completed.length > 0 && (
                                 <View>
                                     <Text style={styles.subGroupTitle}>Cantidad Realizada || Cantidad Ofertada:</Text>
-                                    {groupedAndStatusLineas[idParte].completed.map((linea: LineaOferta) => (
+                                    {parte.completed.map((linea: LineasPorParte) => (
                                         <TouchableOpacity
-                                            key={linea.ocl_idlinea}
+                                            key={linea.id}
                                             onPress={() => navigation.navigate("InfoLinea", {
                                                 user,
                                                 accessToken,
-                                                linea,
-                                                idParte
+                                                linea, // TODO: SEGUIR CON ESTO
+                                                idParteAPP: parte.idParteAPP,
+                                                idParteERP: parte.idParteERP
                                             })}>
                                             <View
-                                                style={linea.ppcl_Certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
-                                                <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
+                                                style={linea.certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
+                                                <Text style={styles.activityText}>{linea.descriparticulo}</Text>
+                                                <Text style={styles.activityText}>{linea.idParteAPP}</Text>
                                                 <Text style={styles.activityText}>Cantidad
-                                                    (realizado/ofertado): {linea.ppcl_cantidad} / {linea.ocl_UnidadesPres}</Text>
+                                                    (realizado/ofertado): {linea.cantidad} / {linea.cantidad_total}</Text>
                                                 <Text style={styles.activityText}>ID
-                                                    Actividad: {linea.ocl_IdArticulo}</Text>
+                                                    Actividad: {linea.idArticulo}</Text>
                                                 <Text
-                                                    style={styles.activityText}>Certificado: {linea.ppcl_Certificado > 0 ? "Sí" : "No"}</Text>
+                                                    style={styles.activityText}>Certificado: {linea.certificado > 0 ? "Sí" : "No"}</Text>
                                             </View>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
                             )}
 
-                            {groupedAndStatusLineas[idParte].pending.length > 0 && (
+                            {parte.pending.length > 0 && (
                                 <View>
                                     <Text style={styles.subGroupTitle}>Cantidad Realizada | Cantidad Ofertada:</Text>
-                                    {groupedAndStatusLineas[idParte].pending.map((linea: LineaOferta) => (
+                                    {parte.pending.map((linea: LineaOferta) => (
                                         <TouchableOpacity
                                             key={linea.ocl_idlinea}
                                             onPress={() => navigation.navigate("InfoLinea", {
                                                 user,
                                                 accessToken,
                                                 linea,
-                                                idParte
+                                                idParteAPP: parte.idParteAPP,
+                                                idParteERP: parte.idParteERP
                                             })}>
                                             <View
                                                 style={linea.ppcl_Certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
@@ -354,7 +393,7 @@ export default function InfoOferta({route, navigation}: InfoOfertaProps) { // Re
                         </TouchableOpacity>
                     ))
                 ) : (
-                    <Text style={styles.value}>No hay lineas registradas.</Text>
+                    <Text style={styles.value}>No hay lineas asignadas.</Text>
                 )}
             </View>
         </ScrollView>
@@ -431,7 +470,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 15,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,

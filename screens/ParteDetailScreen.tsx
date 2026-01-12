@@ -1,5 +1,5 @@
 // src/screens/ParteDetailScreen.tsx
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -11,16 +11,16 @@ import {
     Linking,
     FlatList
 } from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList} from '../App';
-import {apiService} from '../config/apiService';
-import {LineaPartePDF, ParteResponsePDF, Worker, WorkerParte} from "../config/types";
-import {Ionicons} from "@expo/vector-icons";
+import { StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList } from '../App';
+import { apiService } from '../config/apiService';
+import { LineaPartePDF, ParteResponsePDF, Worker, WorkerParte } from "../config/types";
+import { Ionicons } from "@expo/vector-icons";
 
 type ParteDetailScreenProps = StackScreenProps<MainTabParamList, 'ParteDetail'>;
 
-export default function ParteDetail({route, navigation}: ParteDetailScreenProps) {
-    const {parteId, user, accessToken} = route.params;
+export default function ParteDetail({ route, navigation }: ParteDetailScreenProps) {
+    const { idParteERP, idParteAPP, user, accessToken } = route.params;
     const [parteDetails, setParteDetails] = useState<ParteResponsePDF | null>(null);
     const [loading, setLoading] = useState(true);
     const [mensaje, setMensaje] = useState("");
@@ -31,7 +31,8 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
     useEffect(() => {
         const fetchParteDetails = async () => {
             setLoading(true);
-            const response = await apiService.getPartePdf(parteId, accessToken);
+
+            const response = await apiService.getPartePdf(idParteAPP, accessToken);
             if (response.success && response.data) {
                 console.log(response.data);
                 setParteDetails(response.data);
@@ -40,32 +41,35 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
             }
             setLoading(false);
         };
-
-        const fetchWorkersParte = async () => {
-            setLoading(true)
-            const res = await apiService.getWorkersParte(accessToken, parteId);
-            if (res.success && res.data) {
-                setWorkers(res.data!);
-            } else {
-                Alert.alert("Error", res.error || "No se pudieron cargar los trabajadores del parte.");
+        {
+            {/*
+            const fetchWorkersParte = async () => {
+                setLoading(true)
+                const res = await apiService.getWorkersParte(accessToken, parteId);
+                if (res.success && res.data) {
+                    setWorkers(res.data!);
+                } else {
+                    Alert.alert("Error", res.error || "No se pudieron cargar los trabajadores del parte.");
             }
         }
-
-        fetchParteDetails();
+        
         fetchWorkersParte();
-    }, [parteId, accessToken]);
+        */}
+        }
+        fetchParteDetails();
+    }, [idParteAPP, idParteERP, accessToken]);
 
 
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007bff"/>
+                <ActivityIndicator size="large" color="#007bff" />
                 <Text style={styles.loadingText}>Cargando detalles del parte...</Text>
             </View>
         );
     }
 
-    const renderWorker = ({item}: { item: WorkerParte }) => (
+    const renderWorker = ({ item }: { item: WorkerParte }) => (
         <View style={styles.lineItem}>
             <Text style={styles.lineDesc}>{item.nombreTrabajador}</Text>
         </View>
@@ -94,7 +98,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
     if (!parteDetails) {
         return (
             <View style={styles.container}>
-                <Text style={styles.noDataText}>No se encontraron detalles para el parte {parteId}.</Text>
+                <Text style={styles.noDataText}>No se encontraron detalles para el parte {idParteAPP}.</Text>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <Text style={styles.backButtonText}>Volver</Text>
                 </TouchableOpacity>
@@ -106,7 +110,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
         <ScrollView style={styles.container}>
             <Ionicons style={styles.arrowBack} name={"arrow-back"} onPress={navigation.goBack}></Ionicons>
 
-            <Text style={styles.headerTitle}>Detalles del Parte de Obra #{parteDetails.nParte}</Text>
+            <Text style={styles.headerTitle}>Detalles del Parte de Obra #{parteDetails.idParteERP}</Text>
 
             <View style={styles.infoBox}>
                 <Text style={styles.infoLabel}>Proyecto: <Text
@@ -125,8 +129,18 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
                         style={styles.infoValue}>{parteDetails.comentarios}</Text></Text>
                 )}
             </View>
-            <TouchableOpacity style={styles.assignWorkersButton} onPress={() => {
+            {/* <TouchableOpacity style={styles.assignWorkersButton} onPress={() => {
                 navigation.navigate('AsignarTrabajadoresScreen', {user, accessToken, parteId})
+            }}>
+                <Text style={styles.assignWorkersText}>👷🏻‍♂️ Asignar trabajadores</Text>
+            </TouchableOpacity>
+            {listaTrabajadores()} */}
+
+
+            <TouchableOpacity disabled={true} style={styles.disabledButton
+            } onPress={() => {
+                const parteId: number = parteDetails.idParteAPP;
+                navigation.navigate('AsignarTrabajadoresScreen', { user, accessToken, parteId })
             }}>
                 <Text style={styles.assignWorkersText}>👷🏻‍♂️ Asignar trabajadores</Text>
             </TouchableOpacity>
@@ -138,7 +152,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
                     <Text style={styles.noLinesText}>No hay líneas asociadas a este parte.</Text>
                 ) : (
                     parteDetails.lineas.map((linea: LineaPartePDF, index: number) => (
-                        <View key={linea.id || index} style={styles.lineItem}>
+                        <View key={linea.id_linea || index} style={styles.lineItem}>
                             <Text style={styles.lineDesc}>{linea.DescripArticulo}</Text>
                             <Text style={styles.lineQuantity}>{linea.cantidad} {linea.UnidadMedida}</Text>
                         </View>
@@ -147,7 +161,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
             </View>
 
             <TouchableOpacity style={styles.generatePdfButton} onPress={() => {
-                apiService.imprimirPDF(parteId.toString(), accessToken).then(response => {
+                apiService.imprimirPDF(parteDetails.idParteAPP.toString(), accessToken).then(response => {
                     if (response.data.mensaje == 'OK') {
                         Alert.alert("PDF generado", "El PDF se ha generado correctamente.")
                     }
@@ -162,7 +176,7 @@ export default function ParteDetail({route, navigation}: ParteDetailScreenProps)
                     <Image source={{ uri: `data:image/png;base64,${parteDetails.signature}` }} style={styles.signatureImage} />
                 </View>
             )} */}
-            <View style={{height: 50}}/>
+            <View style={{ height: 50 }} />
         </ScrollView>
     );
 }
@@ -238,7 +252,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 20,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
@@ -283,10 +297,23 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 15,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,
+    },
+    disabledButton: {
+        backgroundColor: '#ebd6b6fa',
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+        opacity: 0.5,
+
     },
     assignWorkersText: {
         fontSize: 18,
@@ -299,7 +326,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 20,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 5,

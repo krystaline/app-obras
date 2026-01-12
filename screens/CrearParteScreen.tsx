@@ -118,7 +118,7 @@ export default function CrearParteScreen({ route, navigation }: CrearParteScreen
 
 
             lineasParaBackend.push({
-                id: parseInt(linea.ocl_idlinea!.toString()),
+                id_linea: parseInt(linea.ocl_idlinea!.toString()),
                 capitulo: 1,
                 idArticulo: linea.ocl_IdArticulo!,
                 id_parte: lastIdParte,
@@ -136,10 +136,10 @@ export default function CrearParteScreen({ route, navigation }: CrearParteScreen
         const dataToSend: ParteImprimirPDF = {
             proyecto: proyecto,
             oferta: oferta.idOferta,
-            jefeEquipo: user['displayName'],
+            jefe_equipo: user['displayName'],
             telefono: user['mobilePhone'],
             fecha: new Date().toISOString().slice(0, 10),
-            contactoObra: oferta.cliente!,
+            contacto_obra: oferta.cliente!,
             comentarios: comments,
             lineas: lineasParaBackend,
             idOferta: oferta.idOferta,
@@ -147,6 +147,7 @@ export default function CrearParteScreen({ route, navigation }: CrearParteScreen
             pdf: null,
             idParteAPP: lastIdParte!,
             idParteERP: null,
+            idProyecto: oferta.idProyecto,
         }
 
 
