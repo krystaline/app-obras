@@ -31,7 +31,7 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
     const { user } = route.params as { user: any }
     const { accessToken } = route.params as { accessToken: string }
     const [lineas, setLineas] = useState<LineaOferta[]>()
-    const [lineasAsignadas, setLineasAsignadas] = useState<LineaOferta[]>()
+    const [lineasAsignadas, setLineasAsignadas] = useState<LineasPorParte[]>()
     const [loading, setLoading] = useState(true)
     const { oferta } = route.params as { oferta: Oferta }
     const [refreshing, setRefreshing] = useState(false)
@@ -180,11 +180,12 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
             Alert.alert('Error', 'Hubo un problema al subir la imagen. Por favor, inténtalo de nuevo.');
         }
     };
+
     const groupLineasByParteAndQuantityStatus = (lineas: LineaOferta[]) => {
         const groupedByParte: { [key: string]: { completed: LineasPorParte[], pending: LineaOferta[], idParteERP: number, idParteAPP: number } } = {};
 
         lineas.forEach(linea => {
-            const idParteERP = linea.ppcl_IdParte || 0; // Use 0 for lines without a part
+            const idParteERP = linea.ppcl_IdParte || 0; // Use 0 for lines without a parte
             const idParteAPP = linea.idParteAPP || 0;
 
             const key = `${idParteERP}-${idParteAPP}`;
@@ -204,7 +205,31 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
         return groupedByParte;
     };
 
-    const groupedAndStatusLineas = lineasAsignadas ? groupLineasByParteAndQuantityStatus(lineasAsignadas) : {};
+    const groupLineasAsignadas = (lineas: LineasPorParte[]) => {
+        const groupedByParte: { [key: string]: { completed: LineasPorParte[], pending: LineasPorParte[], idParteERP: number, idParteAPP: number } } = {};
+
+        lineas.forEach(linea => {
+            const idParteERP = linea.idParteERP || 0; // Use 0 for lines without a parte
+            const idParteAPP = linea.idParteAPP || 0;
+
+            const key = `${idParteERP}-${idParteAPP}`;
+
+            if (!groupedByParte[key]) {
+                groupedByParte[key] = { completed: [], pending: [], idParteERP, idParteAPP };
+            }
+
+            if (linea.cantidad <= linea.cantidad_total) {
+                console.log("linea completada", linea)
+                groupedByParte[key].completed.push(linea);
+            } else {
+                groupedByParte[key].pending.push(linea);
+            }
+        });
+
+        return groupedByParte;
+    };
+
+    const groupedAndStatusLineas = lineasAsignadas ? groupLineasAsignadas(lineasAsignadas) : {};
     const partes = Object.values(groupedAndStatusLineas).sort((a, b) => a.idParteERP - b.idParteERP);
 
 
@@ -298,6 +323,14 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
             </View>
 
             { /* LINEAS DE LA OFERTA */}
+            <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('CrearParte',
+                {
+                    user: user,
+                    accessToken: accessToken,
+                    oferta: oferta,
+                    lineas: lineas!,
+                    proyecto: oferta.descripcion ? oferta.descripcion : "",
+                })}><Text>➕ Crear Parte</Text></TouchableOpacity>
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Líneas de la Oferta:</Text>
                 {lineas && lineas.length > 0 ? (
@@ -313,17 +346,9 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
                 )}
             </View>
 
-
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Lineas por parte:</Text>
-                <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('CrearParte',
-                    {
-                        user: user,
-                        accessToken: accessToken,
-                        oferta: oferta,
-                        lineas: lineas!,
-                        proyecto: oferta.descripcion ? oferta.descripcion : "",
-                    })}><Text>➕ Crear Parte</Text></TouchableOpacity>
+
                 {lineasAsignadas && lineasAsignadas.length > 0 ? (
                     partes.map((parte) => (
                         <TouchableOpacity key={`${parte.idParteAPP}`} onPress={() => {
@@ -332,11 +357,10 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
                             })
                         }}>
                             <Text
-                                style={styles.groupTitle}>{parte.idParteERP ? "Grupo parte: " + parte.idParteERP + "." : "Líneas sin parte"}</Text>
-
+                                style={styles.groupTitle}>{parte.idParteERP ? "Grupo parte: " + parte.idParteERP : "Líneas sin parte"}</Text>
                             {parte.completed.length > 0 && (
                                 <View>
-                                    <Text style={styles.subGroupTitle}>Cantidad Realizada || Cantidad Ofertada:</Text>
+                                    {/*  <Text style={styles.subGroupTitle}>Cantidad Realizada || Cantidad Ofertada:</Text> */}
                                     {parte.completed.map((linea: LineasPorParte) => (
                                         <TouchableOpacity
                                             key={linea.id}
@@ -366,9 +390,9 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
                             {parte.pending.length > 0 && (
                                 <View>
                                     <Text style={styles.subGroupTitle}>Cantidad Realizada | Cantidad Ofertada:</Text>
-                                    {parte.pending.map((linea: LineaOferta) => (
+                                    {parte.pending.map((linea: LineasPorParte) => (
                                         <TouchableOpacity
-                                            key={linea.ocl_idlinea}
+                                            key={linea.id}
                                             onPress={() => navigation.navigate("InfoLinea", {
                                                 user,
                                                 accessToken,
@@ -377,14 +401,14 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
                                                 idParteERP: parte.idParteERP
                                             })}>
                                             <View
-                                                style={linea.ppcl_Certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
-                                                <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
+                                                style={linea.certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
+                                                <Text style={styles.activityText}>{linea.descriparticulo}</Text>
                                                 <Text style={styles.activityText}>Cantidad
-                                                    (realizado/ofertado): {linea.ppcl_cantidad} / {linea.ocl_UnidadesPres}{linea.ocl_tipoUnidad}</Text>
+                                                    (realizado/ofertado): {linea.cantidad} / {linea.cantidad_total}{linea.unidadmedida}</Text>
                                                 <Text style={styles.activityText}>ID
-                                                    Actividad: {linea.ocl_IdArticulo}</Text>
+                                                    Actividad: {linea.idArticulo}</Text>
                                                 <Text
-                                                    style={styles.activityText}>Certificado: {linea.ppcl_Certificado > 0 ? "Sí" : "No"}</Text>
+                                                    style={styles.activityText}>Certificado: {linea.certificado > 0 ? "Sí" : "No"}</Text>
                                             </View>
                                         </TouchableOpacity>
                                     ))}
@@ -517,7 +541,7 @@ const styles = StyleSheet.create({
     },
     section: {
         marginTop: 20,
-        marginBottom: 80,
+        marginBottom: 20,
     },
     sectionTitle: {
         fontSize: 20,
