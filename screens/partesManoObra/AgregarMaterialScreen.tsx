@@ -1,5 +1,5 @@
 // AgregarMaterialScreen.tsx (versión con buscador/autocomplete sin librerías externas)
-import React, {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -11,10 +11,10 @@ import {
     Keyboard,
     Platform,
 } from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList} from '../../App';
-import {apiService} from '../../config/apiService';
-import {Material} from '../../config/types';
+import { StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList } from '../../App';
+import { apiService } from '../../config/apiService';
+import { Material } from '../../config/types';
 
 // TIPOS
 // Asumo el tipo Material con, al menos, estas propiedades utilizadas.
@@ -30,7 +30,7 @@ import {Material} from '../../config/types';
 
 type Props = StackScreenProps<MainTabParamList, 'AgregarMaterial'>;
 
-export default function AgregarMaterialScreen({navigation, route}: Props) {
+export default function AgregarMaterialScreen({ navigation, route }: Props) {
     const onSave = route.params?.onSave;
     const accessToken = route.params?.accessToken;
 
@@ -117,6 +117,7 @@ export default function AgregarMaterialScreen({navigation, route}: Props) {
             descripcion: selectedMaterial.descripcion ?? undefined,
             cantidad: selectedMaterial.cantidad ?? 1,
             precio: selectedMaterial.precio ?? 0,
+            id: selectedMaterial.id,
         };
 
         onSave?.(nuevoMaterial);
@@ -124,7 +125,7 @@ export default function AgregarMaterialScreen({navigation, route}: Props) {
     };
 
     // Render del item del dropdown
-    const renderItem = ({item}: { item: Material }) => (
+    const renderItem = ({ item }: { item: Material }) => (
         <TouchableOpacity onPress={() => handleSelect(item)} style={styles.itemRow}>
             <Text style={styles.itemTitle}>{item.idArticulo}</Text>
             {!!item.lote && <Text style={styles.itemMeta}>Lote: {item.lote}</Text>}
@@ -168,7 +169,7 @@ export default function AgregarMaterialScreen({navigation, route}: Props) {
                                 keyExtractor={(m, i) => `${m.idArticulo}-${m.lote ?? 'NL'}-${i}`}
                                 renderItem={renderItem}
                                 style={styles.list}
-                                contentContainerStyle={{paddingVertical: 8}}
+                                contentContainerStyle={{ paddingVertical: 8 }}
                                 initialNumToRender={12}
                                 windowSize={10}
                                 onScrollBeginDrag={Keyboard.dismiss}
@@ -183,7 +184,7 @@ export default function AgregarMaterialScreen({navigation, route}: Props) {
                 style={styles.input}
                 value={cantidad}
                 onChangeText={setCantidad}
-                keyboardType={Platform.select({ios: 'numeric', android: 'numeric'})}/>
+                keyboardType={Platform.select({ ios: 'numeric', android: 'numeric' })} />
 
             {/* FECHA */}
             <Text style={styles.label}>Fecha</Text>
@@ -192,7 +193,7 @@ export default function AgregarMaterialScreen({navigation, route}: Props) {
                 value={fecha}
                 onChangeText={setFecha}
                 placeholder="YYYY-MM-DD"
-                keyboardType={Platform.select({ios: 'numbers-and-punctuation', android: 'numeric'})}
+                keyboardType={Platform.select({ ios: 'numbers-and-punctuation', android: 'numeric' })}
             />
 
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
@@ -203,8 +204,8 @@ export default function AgregarMaterialScreen({navigation, route}: Props) {
                 style={styles.cancelButton}
                 onPress={() => {
                     Alert.alert('Descartar Material', '¿Seguro que quieres descartar?', [
-                        {text: 'Cancelar', style: 'cancel'},
-                        {text: 'Descartar', style: 'destructive', onPress: () => navigation.goBack()},
+                        { text: 'Cancelar', style: 'cancel' },
+                        { text: 'Descartar', style: 'destructive', onPress: () => navigation.goBack() },
                     ]);
                 }}
             >
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         shadowOpacity: 0.08,
         shadowRadius: 8,
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         elevation: 3,
     },
     list: {

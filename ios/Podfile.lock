@@ -252,6 +252,8 @@ PODS:
     - ExpoModulesCore
   - ExpoSecureStore (15.0.6):
     - ExpoModulesCore
+  - ExpoSystemUI (6.0.9):
+    - ExpoModulesCore
   - ExpoWebBrowser (15.0.6):
     - ExpoModulesCore
   - EXUpdatesInterface (2.0.0):
@@ -2144,6 +2146,7 @@ DEPENDENCIES:
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoRandom (from `../node_modules/expo-random/ios`)
   - ExpoSecureStore (from `../node_modules/expo-secure-store/ios`)
+  - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
   - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -2270,6 +2273,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-random/ios"
   ExpoSecureStore:
     :path: "../node_modules/expo-secure-store/ios"
+  ExpoSystemUI:
+    :path: "../node_modules/expo-system-ui/ios"
   ExpoWebBrowser:
     :path: "../node_modules/expo-web-browser/ios"
   EXUpdatesInterface:
@@ -2451,6 +2456,7 @@ SPEC CHECKSUMS:
   ExpoModulesCore: 9281d8f1cda9d0c37dbce34c26014212b22eb8c0
   ExpoRandom: d1444df65007bdd4070009efd5dab18e20bf0f00
   ExpoSecureStore: 57327b9a484ad730cf823c82d092e0bf71e11512
+  ExpoSystemUI: 2ad325f361a2fcd96a464e8574e19935c461c9cc
   ExpoWebBrowser: 84d4438464d9754a4c1f1eaa97cd747f3752187e
   EXUpdatesInterface: 5adf50cb41e079c861da6d9b4b954c3db9a50734
   FBLazyVector: 9e0cd874afd81d9a4d36679daca991b58b260d42

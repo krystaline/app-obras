@@ -25,6 +25,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "manifestPlaceholders": {
+        "appAuthRedirectScheme": "com.krystaline.appobras"
+      },
       "edgeToEdgeEnabled": true,
       "package": "com.krystaline.appobras"
     },

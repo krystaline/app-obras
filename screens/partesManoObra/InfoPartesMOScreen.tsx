@@ -1,5 +1,5 @@
-import {StackScreenProps} from "@react-navigation/stack";
-import {MainTabParamList} from "../../App";
+import { StackScreenProps } from "@react-navigation/stack";
+import { MainTabParamList } from "../../App";
 import {
     Alert,
     Button,
@@ -11,22 +11,105 @@ import {
     Text,
     TouchableOpacity,
     View,
-    Dimensions
+    Dimensions,
+    LayoutAnimation,
+    Platform,
+    UIManager
 } from "react-native";
-import React, {useCallback, useEffect} from "react";
-import {apiService} from "../../config/apiService";
-import {Ionicons} from "@expo/vector-icons";
-import {Oferta} from "../../config/types";
-import {ParteMOEnviar} from "./NewParteMOScreen";
+import React, { useCallback, useEffect } from "react";
+import { apiService } from "../../config/apiService";
+import { Ionicons } from "@expo/vector-icons";
+import { Oferta, ParteMOEnviar, ParteMOListaDTO } from "../../config/types";
+
+if (Platform.OS === 'android') {
+    if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+}
+
+const ParteItem = ({ item }: { item: ParteMOListaDTO }) => {
+    const [expanded, setExpanded] = React.useState(false);
+
+    const toggleExpand = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpanded(!expanded);
+    };
+
+    return (
+        <TouchableOpacity style={styles.itemContainer} onPress={toggleExpand} activeOpacity={0.8}>
+            <View style={styles.itemHeader}>
+                <Ionicons style={styles.iconBadge} name={'briefcase-outline'} />
+                <View style={styles.parteMOInfoContainer}>
+                    <Text style={styles.itemTitle}>
+                        {item.actividades?.length > 0
+                            ? item.actividades.map(a => a.nombre).join(", ").substring(0, 30) + (item.actividades.length > 1 ? "..." : "")
+                            : "Sin actividades"}
+                    </Text>
+                    <Text style={styles.itemDetails}>{item.fecha?.replace("T", " - ")}</Text>
+                </View>
+                <View style={[
+                    styles.statusBadge,
+                    item.estado === 'pendiente' ? styles.pendingBadge :
+                        item.estado === 'validado' ? styles.unpendingBadge :
+                            styles.cancelledBadge
+                ]}>
+                    <Text style={styles.statusText}>{item.estado?.toUpperCase() || 'N/A'}</Text>
+                </View>
+            </View>
+
+            {expanded && (
+                <View style={styles.expandedContent}>
+                    {/* SEPARATOR */}
+                    <View style={styles.separator} />
+
+                    {/* ACTIVIDADES */}
+                    <View style={styles.detailSection}>
+                        <Text style={styles.detailLabel}>Actividades:</Text>
+                        {item.actividades && item.actividades.length > 0 ? (
+                            item.actividades.map((act, index) => (
+                                <Text key={index} style={styles.detailText}>• {act.nombre}</Text>
+                            ))
+                        ) : (
+                            <Text style={styles.detailText}>- No hay actividades registradas</Text>
+                        )}
+                    </View>
+
+                    {/* MATERIALES */}
+                    <View style={styles.detailSection}>
+                        <Text style={styles.detailLabel}>Materiales:</Text>
+                        {item.materiales && item.materiales.length > 0 ? (
+                            item.materiales.map((mat, index) => (
+                                <Text key={index} style={styles.detailText}>
+                                    • {mat.cantidad} x {mat.idArticulo} ({mat.lote || 'Sin lote'})
+                                </Text>
+                            ))
+                        ) : (
+                            <Text style={styles.detailText}>- No hay materiales</Text>
+                        )}
+                    </View>
+
+                    {/* VEHICULO */}
+                    <View style={styles.detailSection}>
+                        <Text style={styles.detailLabel}>Vehículo:</Text>
+                        <Text style={styles.detailText}>
+                            {item.vehiculo ? `• ${item.vehiculo}` : "- No asignado"}
+                        </Text>
+                    </View>
+
+                </View>
+            )}
+        </TouchableOpacity>
+    );
+};
 
 type InfoParteMOProps = StackScreenProps<MainTabParamList, 'InfoParteMO'>; // Removed `parte: ParteData` from here
 
-export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
-    const {idOferta} = route.params as { idOferta: number }; // Extract oferta from route.params
-    const {user} = route.params as { user: any }
-    const {oferta} = route.params as { oferta: Oferta }
+export default function InfoParteMO({ route, navigation }: InfoParteMOProps) {
+    const { idOferta } = route.params as { idOferta: number }; // Extract oferta from route.params
+    const { user } = route.params as { user: any }
+    const { oferta } = route.params as { oferta: Oferta }
 
-    const {accessToken} = route.params as { accessToken: string }
+    const { accessToken } = route.params as { accessToken: string }
     const [loading, setLoading] = React.useState(true)
     const [refreshing, setRefreshing] = React.useState(false)
     const [partes, setPartes] = React.useState<any>()
@@ -56,38 +139,23 @@ export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
         fetchPartesMO()
     }, []);
 
-    const renderItem = ({item}: { item: ParteMOEnviar }) => {
-        // UI para una Oferta
-        return (
-            <TouchableOpacity style={styles.itemContainer} onPress={() => {
-            }}>
-                <Ionicons style={styles.iconBadge} name={'briefcase-outline'}></Ionicons>
-                <View style={styles.parteMOInfoContainer}>
-                    <Text style={styles.itemTitle}>
-                        {item.accion?.length > 20 ? item.accion.substring(0, 20) + '...' : item.accion}
-                    </Text>
-                    <Text style={styles.itemDetails}>{item.creation_date.replace("T", " - ")}</Text>
-                </View>
-                <Text
-                    style={[styles.statusBadge, item.estado === 'pendiente' ? styles.pendingBadge : item.estado === 'validado' ? styles.unpendingBadge : styles.cancelledBadge]}><Text
-                    style={[styles.statusText]}>{item.estado?.toUpperCase()}</Text></Text>
-            </TouchableOpacity>
-        );
+    const renderItem = ({ item }: { item: ParteMOListaDTO }) => {
+        return <ParteItem item={item} />;
     };
     return (
         <ScrollView style={styles.container}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            colors={['#5bbd6f']} // Color del spinner en Android
-                            tintColor={'#5bbd6f'} // Color del spinner en iOS
-                        />
-                    }
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={['#5bbd6f']} // Color del spinner en Android
+                    tintColor={'#5bbd6f'} // Color del spinner en iOS
+                />
+            }
         >
             <Text style={styles.title}>Información Proyecto</Text>
             <Ionicons style={styles.arrowBack} name={"arrow-back"}
-                      onPress={navigation.goBack}></Ionicons>
+                onPress={navigation.goBack}></Ionicons>
             <View style={styles.card}>
                 <Text style={styles.label}>ID proyecto:
                     <Text style={styles.value}> {oferta.idProyecto}</Text>
@@ -107,15 +175,15 @@ export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Mis partes: </Text>
                 <TouchableOpacity style={[styles.createCard]}
-                                  onPress={() => navigation.navigate('CrearParteMO',
-                                      {
-                                          user: user,
-                                          proyecto: oferta.idProyecto,
-                                          oferta: oferta,
-                                          accessToken: accessToken,
-                                          nPartes: partes.length+1
-                                      })}><Text>
-                    Crear Parte ➕</Text></TouchableOpacity>
+                    onPress={() => navigation.navigate('CrearParteMO',
+                        {
+                            user: user,
+                            proyecto: oferta.idProyecto,
+                            oferta: oferta,
+                            accessToken: accessToken,
+                            nPartes: partes ? partes.length + 1 : 1
+                        })}><Text>
+                        Crear Parte ➕</Text></TouchableOpacity>
                 <FlatList
                     data={partes}
                     keyExtractor={(item) => String('idParte' in item ? item.idParte : "")}
@@ -137,6 +205,13 @@ export default function InfoParteMO({route, navigation}: InfoParteMOProps) {
 }
 
 
+
+
+// Ensure itemContainer supports column layout for expansion
+// but header is row.
+// We need to modify itemContainer to wrap content properly
+
+// UPDATE STYLES
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -216,7 +291,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 15,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,
@@ -356,54 +431,82 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
     },
+    // UPDATED ITEM STYLES
     itemContainer: {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'row',
-        position: 'relative',
         backgroundColor: "white",
         padding: 16,
         marginBottom: 12,
         borderRadius: 12,
         shadowColor: "#000",
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,
+        // Changed from just row to column to handle expansion
+        flexDirection: 'column',
+    },
+    itemHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    expandedContent: {
+        marginTop: 12,
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#f0f0f0',
+        marginBottom: 12,
+    },
+    detailSection: {
+        marginBottom: 10,
+    },
+    detailLabel: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 4,
+    },
+    detailText: {
+        fontSize: 14,
+        color: '#555',
+        marginLeft: 8,
+        marginBottom: 2,
     },
     iconBadge: {
         padding: 12,
         fontSize: 20,
         borderRadius: 40,
-        backgroundColor: '#eaeaea'
+        backgroundColor: '#eaeaea',
+        marginRight: 10,
     },
     parteMOInfoContainer: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        width: '90%',
-        marginLeft: 15,
     },
     itemTitle: {
         fontSize: 14,
         fontWeight: "600",
         color: "#1e293b",
-        flex: 1,
+        marginBottom: 2,
     },
     statusBadge: {
-        height: 20,
+        height: 24, // increased slightly
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 8, // add margin to separate from text
     },
     statusText: {
         fontSize: 11,
         fontWeight: "bold",
+        color: "#333", // Ensure text is visible depending on badge color
     },
     itemDetails: {
         fontSize: 14,
         color: "#64748b",
-        marginBottom: 4,
     },
 });

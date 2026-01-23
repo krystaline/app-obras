@@ -1,5 +1,5 @@
 // CrearParteMOScreen.tsx (con renderizado de materiales)
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 import {
     View,
@@ -13,31 +13,19 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList} from '../../App';
-import {apiService} from '../../config/apiService';
-import {Oferta, Desplazamiento, ManoDeObra, Material} from '../../config/types';
-import {Ionicons} from '@expo/vector-icons';
+import { StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList } from '../../App';
+import { apiService } from '../../config/apiService';
+import { Oferta, Desplazamiento, ManoDeObra, Material, ParteMOEnviar, VehiculoEnviarDTO } from '../../config/types';
+import { Ionicons } from '@expo/vector-icons';
 
 // Define the type for the route prop
 type CrearParteMOScreenProps = StackScreenProps<MainTabParamList, 'CrearParteMO'>;
 
-export type ParteMOEnviar = {
 
-    idParteMO: string;
-    idProyecto: string;
-    idOferta: number;
-    usuario: any;
-    materiales: Material[];
-    desplazamientos: Desplazamiento[];
-    manosdeobra: ManoDeObra[];
-    comentarios: string;
-    fecha: string;
-    estado: string | null;
-};
 
-export default function CrearParteMOScreen({route, navigation}: CrearParteMOScreenProps) {
-    const {oferta, proyecto, user, nPartes, accessToken} = route.params as {
+export default function CrearParteMOScreen({ route, navigation }: CrearParteMOScreenProps) {
+    const { oferta, proyecto, user, nPartes, accessToken } = route.params as {
         oferta: Oferta;
         proyecto: string;
         user: any;
@@ -49,23 +37,28 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
     const [loading, setLoading] = useState(false);
     const [comments, setComments] = useState<string>('');
 
-    const [desplazamientos, setDesplazamientos] = useState<Desplazamiento[]>([]);
+    const [desplazamientos, setDesplazamientos] = useState<VehiculoEnviarDTO[]>([]);
     const [manosDeObra, setManosDeObra] = useState<ManoDeObra[]>([]);
     const [materiales, setMateriales] = useState<Material[]>([]);
 
 
     const handleSubmit = async () => {
+        const now = new Date();
+        const fechaFormatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
         const enviar: ParteMOEnviar = {
-            idParteMO: `${idOferta}-${nPartes}`,
+            idParteMO: `${nPartes}`,
             idProyecto: proyecto,
             desplazamientos: desplazamientos,
             idOferta: idOferta,
             materiales: materiales,
             usuario: user.id,
-            fecha: new Date().toLocaleString(),
+            fecha: fechaFormatted,
             comentarios: comments,
-            estado: null,
+            estado: "",
+            accion: "",
             manosdeobra: manosDeObra,
+            creation_date: new Date().toLocaleString(),
         };
 
         try {
@@ -83,7 +76,7 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
 
     const handleCancel = () => {
         Alert.alert('Descartar Parte Mano de Obra', '¿Estás seguro de que quieres descartar este parte?', [
-            {text: 'Cancelar', style: 'cancel'},
+            { text: 'Cancelar', style: 'cancel' },
             {
                 text: 'Descartar',
                 onPress: () => navigation.goBack(),
@@ -92,7 +85,7 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
         ]);
     };
 
-    const handleAddDesplazamiento = (nuevoDesplazamiento: Desplazamiento) => {
+    const handleAddDesplazamiento = (nuevoDesplazamiento: VehiculoEnviarDTO) => {
         setDesplazamientos(prev => [...prev, nuevoDesplazamiento]);
     };
     const handleAddMO = (nuevoMO: ManoDeObra) => {
@@ -103,20 +96,20 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
     };
 
     const handleNewDesplazamiento = () => {
-        navigation.navigate('CrearDesplazamiento', {onSave: handleAddDesplazamiento});
+        navigation.navigate('CrearDesplazamiento', { onSave: handleAddDesplazamiento });
     };
     const handleNewManoDeObra = () => {
-        navigation.navigate('CrearMO', {onSave: handleAddMO});
+        navigation.navigate('CrearMO', { onSave: handleAddMO });
     };
     const handleNewMaterial = () => {
-        navigation.navigate('AgregarMaterial', {onSave: handleAddMaterial, accessToken});
+        navigation.navigate('AgregarMaterial', { onSave: handleAddMaterial, accessToken });
     };
 
     // ======== MATERIAL: eliminar con confirmación ========
     const handleMaterialPress = (mat: Material, index: number) => {
         const label = [mat.idArticulo, mat.lote, mat.descripcion].filter(Boolean).join(' · ');
         Alert.alert('Eliminar material', `¿Seguro que quieres eliminar «${label}»?`, [
-            {text: 'Cancelar', style: 'cancel'},
+            { text: 'Cancelar', style: 'cancel' },
             {
                 text: 'Eliminar',
                 style: 'destructive',
@@ -130,24 +123,24 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
     };
 
     // ======== RENDER LISTAS ========
-    const renderDesplazamientos = (items: Desplazamiento[]) => {
+    const renderDesplazamientos = (items: VehiculoEnviarDTO[]) => {
         return items.map(desp => (
             <TouchableOpacity key={desp.id} onPress={() => {
                 Alert.alert('Eliminar Desplazamiento', `¿Eliminar ${desp.matricula}?`, [
-                    {text: 'Cancelar', style: 'cancel'},
+                    { text: 'Cancelar', style: 'cancel' },
                     {
                         text: 'Eliminar',
                         style: 'destructive',
-                        onPress: () => setDesplazamientos(s => s.filter(x => x.id !== desp.id))
+                        onPress: () => setDesplazamientos(s => s.filter(x => x.id.toString() !== desp.id.toString()))
                     },
                 ]);
             }}>
                 <View style={styles.rowItem}>
-                    <View style={styles.rowPill}><Ionicons style={styles.rowIcon} name="car"/><Text
+                    <View style={styles.rowPill}><Ionicons style={styles.rowIcon} name="car" /><Text
                         style={styles.rowText}>{desp.matricula}</Text></View>
-                    <View style={styles.rowPill}><Ionicons style={styles.rowIcon} name="map"/><Text
+                    <View style={styles.rowPill}><Ionicons style={styles.rowIcon} name="map" /><Text
                         style={styles.rowText}>{desp.distancia} km</Text></View>
-                    <View style={styles.rowPill}><Ionicons style={styles.rowIcon} name="calendar"/><Text
+                    <View style={styles.rowPill}><Ionicons style={styles.rowIcon} name="calendar" /><Text
                         style={styles.rowText}>{desp.fecha}</Text></View>
                 </View>
             </TouchableOpacity>
@@ -158,7 +151,7 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
         return items.map(m => (
             <TouchableOpacity key={m.idManoObra} onPress={() => {
                 Alert.alert('Eliminar Mano de obra', `¿Eliminar ${m.accion}?`, [
-                    {text: 'Cancelar', style: 'cancel'},
+                    { text: 'Cancelar', style: 'cancel' },
                     {
                         text: 'Eliminar',
                         style: 'destructive',
@@ -180,24 +173,24 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
                 <TouchableOpacity key={key} onPress={() => handleMaterialPress(mat, index)}>
                     <View style={styles.rowItem}>
                         <View style={styles.rowPill}>
-                            <Ionicons style={styles.rowIcon} name="cube"/>
+                            <Ionicons style={styles.rowIcon} name="cube" />
                             <Text style={[styles.rowText, styles.bold]}>{mat.idArticulo}</Text>
                         </View>
                         {!!mat.lote && (
                             <View style={styles.rowPill}>
-                                <Ionicons style={styles.rowIcon} name="pricetag"/>
+                                <Ionicons style={styles.rowIcon} name="pricetag" />
                                 <Text style={styles.rowText}>{mat.lote}</Text>
                             </View>
                         )}
                         {!!mat.cantidad && (
                             <View style={styles.rowPill}>
-                                <Ionicons style={styles.rowIcon} name="layers"/>
+                                <Ionicons style={styles.rowIcon} name="layers" />
                                 <Text style={styles.rowText}>{mat.cantidad}</Text>
                             </View>
                         )}
                         {!!mat.descripcion && (
-                            <View style={[styles.rowPill, {flexBasis: '100%', marginTop: 6}]}>
-                                <Ionicons style={styles.rowIcon} name="information-circle"/>
+                            <View style={[styles.rowPill, { flexBasis: '100%', marginTop: 6 }]}>
+                                <Ionicons style={styles.rowIcon} name="information-circle" />
                                 <Text style={styles.rowText}>{mat.descripcion}</Text>
                             </View>
                         )}
@@ -259,7 +252,7 @@ export default function CrearParteMOScreen({route, navigation}: CrearParteMOScre
                 </View>
 
                 <TouchableOpacity style={[styles.button, styles.submitButton]} onPress={handleSubmit}>
-                    {loading ? <ActivityIndicator size="small" color="white"/> :
+                    {loading ? <ActivityIndicator size="small" color="white" /> :
                         <Text style={styles.submitButtonText}>Enviar Parte</Text>}
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
@@ -301,7 +294,7 @@ const styles = StyleSheet.create({
         padding: 15,
         marginBottom: 20,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,

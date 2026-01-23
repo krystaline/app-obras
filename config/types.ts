@@ -206,13 +206,7 @@ export interface Material {
     cantidad: number
     precio: number
     lote: string
-}
-
-export interface Vehiculo {
-    id: number
-    matricula: string
-    descripcion: string
-    modelo: string
+    id: string
 }
 
 
@@ -233,4 +227,50 @@ export interface LineasPorParte {
     fechainsertupdate: string
     idOferta: number
     id: number
+}
+
+export type ParteMOEnviar = {
+
+    idParteMO: string;
+    idProyecto: string;
+    idOferta: number;
+    usuario: any;
+    materiales: Material[];
+    desplazamientos: VehiculoEnviarDTO[];
+    manosdeobra: ManoDeObra[];
+    comentarios: string;
+    fecha: string;
+    accion: string | "";
+    estado: string | "";
+    creation_date: string | "";
+};
+
+
+type Actividad = {
+    nombre: string
+
+}
+// esto es el objeto que recibo cuando listo los partes en InfoPartesMOScreen
+export type ParteMOListaDTO = {
+    idParteMO: string
+    fecha: string
+    vehiculo: string
+    actividades: Actividad[]
+    materiales: Material[]
+    estado: string // | null if needed
+}
+
+
+export type Vehiculo = {
+    id: string
+    matricula: string
+    descripcion: string
+    modelo: string
+}
+
+export type VehiculoEnviarDTO = {
+    id: string
+    matricula: string
+    distancia: number
+    fecha: string
 }

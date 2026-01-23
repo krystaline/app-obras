@@ -8,7 +8,7 @@ import { StackScreenProps } from '@react-navigation/stack';
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
 import MenuScreen from './screens/MenuScreen';
-import { Desplazamiento, LineaOferta, LineasPorParte, ManoDeObra, Material, Oferta } from "./config/types";
+import { Desplazamiento, LineaOferta, LineasPorParte, ManoDeObra, Material, Oferta, VehiculoEnviarDTO } from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
 import CrearParteScreen from "./screens/CrearParteScreen";
@@ -65,7 +65,7 @@ export type MainTabParamList = {
     ParteDetail: { user: any; accessToken: string; idParteERP: number, idParteAPP: number };
     AsignarTrabajadoresScreen: { user: any; accessToken: string; parteId: number }; // TODO: cambiar cuando meta trabajadores
     CrearDesplazamiento: {
-        onSave: (desplazamiento: Desplazamiento) => void;
+        onSave: (desplazamiento: VehiculoEnviarDTO) => void;
     };
     AgregarMaterial: {
         onSave: (material: Material) => void;
