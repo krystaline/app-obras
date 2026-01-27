@@ -112,17 +112,45 @@ export default function AgregarMaterialScreen({ navigation, route }: Props) {
             return;
         }
 
-        const nuevoMaterial: Material = {
-            idArticulo: selectedMaterial.idArticulo,
-            lote: selectedMaterial.lote ?? undefined,
-            descripcion: selectedMaterial.descripcion ?? undefined,
-            cantidad: selectedMaterial.cantidad ?? 1,
-            precio: selectedMaterial.precio ?? 0,
-            id: selectedMaterial.id,
+        // Parsear cantidad introducida por el usuario
+        const qty = parseFloat(cantidad);
+        if (isNaN(qty) || qty <= 0) {
+            Alert.alert('Error', 'Introduce una cantidad válida mayor a 0.');
+            return;
+        }
+
+        const executeSave = () => {
+            const nuevoMaterial: Material = {
+                idArticulo: selectedMaterial.idArticulo,
+                lote: selectedMaterial.lote ?? undefined,
+                descripcion: selectedMaterial.descripcion ?? undefined,
+                cantidad: qty, // Usamos la cantidad del input, no la del objeto seleccionado
+                precio: selectedMaterial.precio ?? 0,
+                id: selectedMaterial.id,
+                cantidadTotal: selectedMaterial.cantidadTotal
+            };
+
+            onSave?.(nuevoMaterial);
+            navigation.goBack();
         };
 
-        onSave?.(nuevoMaterial);
-        navigation.goBack();
+        // Verificación de stock (solo si cantidadTotal está definida)
+        // Se asume que cantidadTotal refleja el stock disponible
+        if (selectedMaterial.cantidadTotal !== undefined && selectedMaterial.cantidadTotal !== null) {
+            if (qty > selectedMaterial.cantidadTotal) {
+                Alert.alert(
+                    'Stock insuficiente',
+                    `Has seleccionado ${qty} unidades, pero solo hay ${selectedMaterial.cantidadTotal} disponibles.\n\nContacta con almacén`,
+                    [
+                        { text: 'Cancelar', style: 'cancel' },
+
+                    ]
+                );
+                return;
+            }
+        }
+
+        executeSave();
     };
 
     // Render del item del dropdown

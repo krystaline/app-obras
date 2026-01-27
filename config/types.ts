@@ -204,10 +204,19 @@ export interface Material {
     descripcion: string
     cantidad: number
     precio: number
+    cantidadTotal: number
     lote: string
     id: string
 }
 
+export interface MaterialEnviarDTO {
+    idArticulo: string
+    descripcion: string
+    cantidad: number
+    precio: number
+    lote: string
+    id: string
+}
 
 // este representa la tabla pers_partes_app
 export interface LineasPorParte {

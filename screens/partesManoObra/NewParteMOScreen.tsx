@@ -16,7 +16,7 @@ import {
 import { StackScreenProps } from '@react-navigation/stack';
 import { MainTabParamList } from '../../App';
 import { apiService } from '../../config/apiService';
-import { Oferta, Desplazamiento, ManoDeObra, Material, ParteMOEnviar, VehiculoEnviarDTO } from '../../config/types';
+import { Oferta, ManoDeObra, Material, ParteMOEnviar, VehiculoEnviarDTO } from '../../config/types';
 import { Ionicons } from '@expo/vector-icons';
 
 // Define the type for the route prop

@@ -22,11 +22,11 @@ type CrearDesplazamientoScreenProps = StackScreenProps<MainTabParamList, 'CrearD
 
 export default function CrearDesplazamientoScreen({ navigation, route }: CrearDesplazamientoScreenProps) {
     // Estados
-    const [matricula, setMatricula] = useState('');
     const [distancia, setDistancia] = useState('');
     const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
     const [selectedVehiculo, setSelectedVehiculo] = useState<Vehiculo | null>(null);
 
+    const accessToken = route.params?.accessToken;
 
     // Estado del buscador
     const [query, setQuery] = useState('');
@@ -47,7 +47,7 @@ export default function CrearDesplazamientoScreen({ navigation, route }: CrearDe
     useEffect(() => {
         let mounted = true
         apiService
-            .getVehiculos(user.id)
+            .getVehiculos(accessToken, user.id)
             .then((response: any) => {
                 if (!mounted) return
                 const data: Vehiculo[] = Array.isArray(response.data) ? response.data : []
@@ -227,7 +227,7 @@ export default function CrearDesplazamientoScreen({ navigation, route }: CrearDe
                 value={date}
                 mode={'date'}
                 is24Hour={true}
-                display="spinner"
+                display="default"
                 onChange={onChangeDate}
             />
 
