@@ -1,13 +1,13 @@
 // CrearDesplazamientoScreen.tsx
-import React, {useState, useLayoutEffect} from 'react'; // Importar useLayoutEffect
-import {View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList} from "../../App";
-import {ManoDeObra} from "../../config/types"; // Asegúrate de que la ruta a MainTabParamList sea correcta
+import React, { useState, useLayoutEffect } from 'react'; // Importar useLayoutEffect
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList } from "../../App";
+import { ManoDeObra } from "../../config/types"; // Asegúrate de que la ruta a MainTabParamList sea correcta
 
 type CrearMOScreenProps = StackScreenProps<MainTabParamList, 'CrearMO'>;
 
-export default function CrearMOScreen({navigation, route}: CrearMOScreenProps) {
+export default function CrearMOScreen({ navigation, route }: CrearMOScreenProps) {
     const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
     const [accion, setAccion] = useState("")
     const [unidades, setUnidades] = useState("")
@@ -42,7 +42,6 @@ export default function CrearMOScreen({navigation, route}: CrearMOScreenProps) {
             accion: accion,
             fecha: fecha,
             unidades: parseInt(unidades),
-            precio: 2
         };
 
         // Si la función onSave existe, la llamamos con el nuevo desplazamiento
@@ -60,7 +59,7 @@ export default function CrearMOScreen({navigation, route}: CrearMOScreenProps) {
             "Descartar Desplazamiento",
             "¿Estás seguro de que quieres descartar esto?",
             [
-                {text: "Cancelar", style: "cancel"},
+                { text: "Cancelar", style: "cancel" },
                 {
                     text: "Descartar",
                     onPress: () => {
@@ -69,7 +68,7 @@ export default function CrearMOScreen({navigation, route}: CrearMOScreenProps) {
                     style: "destructive"
                 }
             ],
-            {cancelable: true}
+            { cancelable: true }
         );
     };
 

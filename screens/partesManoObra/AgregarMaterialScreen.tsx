@@ -33,6 +33,7 @@ type Props = StackScreenProps<MainTabParamList, 'AgregarMaterial'>;
 export default function AgregarMaterialScreen({ navigation, route }: Props) {
     const onSave = route.params?.onSave;
     const accessToken = route.params?.accessToken;
+    const user = route.params?.user;
 
     const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
     const [cantidad, setCantidad] = useState('1');
@@ -48,7 +49,7 @@ export default function AgregarMaterialScreen({ navigation, route }: Props) {
     useEffect(() => {
         let mounted = true;
         apiService
-            .getMateriales(accessToken)
+            .getMateriales(accessToken, user.id)
             .then((response: any) => {
                 if (!mounted) return;
                 const data: Material[] = Array.isArray(response?.data) ? response.data : [];

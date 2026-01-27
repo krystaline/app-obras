@@ -195,7 +195,6 @@ export interface Desplazamiento {
 export interface ManoDeObra {
     idManoObra: number
     accion: string
-    precio: number
     unidades: number
     fecha: string
 }

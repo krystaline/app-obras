@@ -1,18 +1,18 @@
-import {View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Touchable, RefreshControl} from 'react-native';
-import {StackScreenProps} from "@react-navigation/stack";
-import {MainTabParamList} from "../App";
-import React, {useEffect, useState} from "react";
-import {Worker} from "../config/types";
-import {apiService} from "../config/apiService";
-import {Checkbox} from "expo-checkbox";
-import {Ionicons} from "@expo/vector-icons";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Touchable, RefreshControl } from 'react-native';
+import { StackScreenProps } from "@react-navigation/stack";
+import { MainTabParamList } from "../App";
+import React, { useEffect, useState } from "react";
+import { Worker } from "../config/types";
+import { apiService } from "../config/apiService";
+import { Checkbox } from "expo-checkbox";
+import { Ionicons } from "@expo/vector-icons";
 
 
 type AsignarTrabajadoresProps = StackScreenProps<MainTabParamList, 'AsignarTrabajadoresScreen'>;
 
 
-export default function AsignarTrabajadoresScreen({route, navigation}: AsignarTrabajadoresProps) {
-    const {user, accessToken, parteId} = route.params as { user: any; accessToken: string, parteId: number };
+export default function AsignarTrabajadoresScreen({ route, navigation }: AsignarTrabajadoresProps) {
+    const { user, accessToken, parteId } = route.params as { user: any; accessToken: string, parteId: number };
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedWorkers, setSelectedWorkers] = useState<Worker[]>([]);
@@ -21,13 +21,13 @@ export default function AsignarTrabajadoresScreen({route, navigation}: AsignarTr
     const toggleCheckbox = (id: string): void => {
         setWorkers(prevWorkers => // Actualiza el estado 'workers' directamente
             prevWorkers.map(worker =>
-                worker.id === id ? {...worker, selected: !worker.selected} : worker
+                worker.id === id ? { ...worker, selected: !worker.selected } : worker
             )
         );
     }
 
     React.useEffect(() => {
-        apiService.getWorkers(accessToken).then(response => {
+        apiService.getWorkers(accessToken, user.id).then(response => {
             if (response.data) {
                 setWorkers(response.data[0].members);
                 setLoading(false);
@@ -37,7 +37,7 @@ export default function AsignarTrabajadoresScreen({route, navigation}: AsignarTr
         });
     }, [accessToken])
 
-    const renderItem = ({item}: { item: Worker }) => (
+    const renderItem = ({ item }: { item: Worker }) => (
         <TouchableOpacity onPress={() => toggleCheckbox(item.id)}>
             <View style={styles.userItem}>
                 <Text style={styles.userName}>{item.display_name} </Text>
@@ -57,7 +57,7 @@ export default function AsignarTrabajadoresScreen({route, navigation}: AsignarTr
 
         if (selectedWorkers) {
             console.log(selectedWorkers);
-            apiService.assignWorkers(accessToken, parteId, selectedWorkers).then(response => {
+            apiService.assignWorkers(accessToken, parteId, selectedWorkers, user.id).then(response => {
                 if (response.success) {
                     Alert.alert('Trabajadores Asignados', 'Has asignado correctamente a los trabajadores.');
                 } else {
@@ -81,9 +81,9 @@ export default function AsignarTrabajadoresScreen({route, navigation}: AsignarTr
             <Ionicons style={styles.arrowBack} name={"arrow-back"} onPress={navigation.goBack}></Ionicons>
             <Text style={styles.title}>Asignar Trabajadores</Text>
             <FlatList style={styles.list}
-                      data={workers}
-                      renderItem={renderItem}
-                      keyExtractor={item => item.id}
+                data={workers}
+                renderItem={renderItem}
+                keyExtractor={item => item.id}
             />
             {/* Botón para mostrar los trabajadores seleccionados */}
             <TouchableOpacity style={styles.button} onPress={handleSelectedWorkers}>
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
         marginVertical: 8,
         borderRadius: 10,
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,

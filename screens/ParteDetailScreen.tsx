@@ -32,7 +32,7 @@ export default function ParteDetail({ route, navigation }: ParteDetailScreenProp
         const fetchParteDetails = async () => {
             setLoading(true);
 
-            const response = await apiService.getPartePdf(idParteAPP, accessToken);
+            const response = await apiService.getPartePdf(idParteAPP, accessToken, user.id);
             if (response.success && response.data) {
                 console.log(response.data);
                 setParteDetails(response.data);
@@ -45,7 +45,7 @@ export default function ParteDetail({ route, navigation }: ParteDetailScreenProp
             {/*
             const fetchWorkersParte = async () => {
                 setLoading(true)
-                const res = await apiService.getWorkersParte(accessToken, parteId);
+                const res = await apiService.getWorkersParte(accessToken, parteId, user.id);
                 if (res.success && res.data) {
                     setWorkers(res.data!);
                 } else {
@@ -161,7 +161,7 @@ export default function ParteDetail({ route, navigation }: ParteDetailScreenProp
             </View>
 
             <TouchableOpacity style={styles.generatePdfButton} onPress={() => {
-                apiService.imprimirPDF(parteDetails.idParteAPP.toString(), accessToken).then(response => {
+                apiService.imprimirPDF(parteDetails.idParteAPP.toString(), accessToken, user.id).then(response => {
                     if (response.data.mensaje == 'OK') {
                         Alert.alert("PDF generado", "El PDF se ha generado correctamente.")
                     }

@@ -1,20 +1,20 @@
 // MenuScreen.tsx
-import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert} from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {RootStackParamList} from '../App';
-import {apiService} from "../config/apiService";
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParamList } from '../App';
+import { apiService } from "../config/apiService";
 import * as ImagePicker from 'expo-image-picker'
 
 type MenuScreenProps = StackScreenProps<RootStackParamList, 'Menu'>;
 
-export default function MenuScreen({navigation, route}: MenuScreenProps) {
-    const {user, accessToken} = route.params;
+export default function MenuScreen({ navigation, route }: MenuScreenProps) {
+    const { user, accessToken } = route.params;
 
     const handleLogout = () => {
         navigation.reset({
             index: 0,
-            routes: [{name: 'Login'}],
+            routes: [{ name: 'Login' }],
         });
     };
 
@@ -44,7 +44,7 @@ export default function MenuScreen({navigation, route}: MenuScreenProps) {
             user,
             accessToken,
             screen: 'ListarPartesMO', // Esto asegura que la pantalla ListarPartes se cargue
-            params: {listType: listType, user, accessToken}
+            params: { listType: listType, user, accessToken }
         });
     };
 
@@ -59,15 +59,15 @@ export default function MenuScreen({navigation, route}: MenuScreenProps) {
                 <Text style={styles.menuItemText}>📋 Ofertas de diseño</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.menuItem, styles.menuSecondaryColor]}
-                              onPress={() => handleSelectOption('partes')}>
+                onPress={() => handleSelectOption('partes')}>
                 <Text style={styles.menuItemText}>👷🏼‍♂️ Partes Mano de Obra</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuItem, styles.menuTertiaryColor]}
-                              onPress={() => handleSelectOption('incidencias')}>
-                <Text style={styles.menuItemText}>⚠️ Incidencias</Text>
+            <TouchableOpacity disabled style={[styles.menuItem, styles.menuTertiaryColor, styles.disabledMenuItem]}
+                onPress={() => handleSelectOption('incidencias')}>
+                <Text style={styles.menuItemText}>⚠️ Incidencias (no disponible)</Text>
             </TouchableOpacity>
 
-            <View style={styles.spacer}/>
+            <View style={styles.spacer} />
         </SafeAreaView>
     );
 }
@@ -131,5 +131,9 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    disabledMenuItem: {
+        opacity: 0.5,
+        userSelect: 'none',
     },
 });

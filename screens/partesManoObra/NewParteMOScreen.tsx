@@ -62,15 +62,24 @@ export default function CrearParteMOScreen({ route, navigation }: CrearParteMOSc
         };
 
         try {
-            const response = await apiService.createParteMO(accessToken, enviar);
+            const response = await apiService.createParteMO(accessToken, enviar, user.id);
             if (response.success) {
-                if (response.message != null) {
-                    Alert.alert(response.message);
-                }
+                Alert.alert(
+                    'Éxito',
+                    response.message || 'Parte de Mano de Obra creado correctamente',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                navigation.goBack();
+                            }
+                        }
+                    ]
+                );
             }
         } catch (error) {
             console.error('error al crear parte MO');
-            Alert.alert('error');
+            Alert.alert('Error al crear el parte de Mano de Obra');
         }
     };
 
@@ -96,13 +105,13 @@ export default function CrearParteMOScreen({ route, navigation }: CrearParteMOSc
     };
 
     const handleNewDesplazamiento = () => {
-        navigation.navigate('CrearDesplazamiento', { onSave: handleAddDesplazamiento });
+        navigation.navigate('CrearDesplazamiento', { onSave: handleAddDesplazamiento, user });
     };
     const handleNewManoDeObra = () => {
         navigation.navigate('CrearMO', { onSave: handleAddMO });
     };
     const handleNewMaterial = () => {
-        navigation.navigate('AgregarMaterial', { onSave: handleAddMaterial, accessToken });
+        navigation.navigate('AgregarMaterial', { onSave: handleAddMaterial, accessToken, user });
     };
 
     // ======== MATERIAL: eliminar con confirmación ========

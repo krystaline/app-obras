@@ -1,5 +1,5 @@
 // MainScreen.tsx
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -11,19 +11,19 @@ import {
     Alert,
     ActivityIndicator
 } from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList, RootStackParamList} from '../App';
-import {Ionicons} from "@expo/vector-icons";
-import {apiService} from "../config/apiService";
-import {Oferta} from "../config/types";
+import { StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList, RootStackParamList } from '../App';
+import { Ionicons } from "@expo/vector-icons";
+import { apiService } from "../config/apiService";
+import { Oferta } from "../config/types";
 
 type MainScreenProps = StackScreenProps<MainTabParamList, 'ListarPartesMO'> & {
     navigation: StackScreenProps<RootStackParamList>['navigation'];
 };
 
 
-export default function MainScreen({route, navigation}: MainScreenProps) {
-    const {user, accessToken} = route.params;
+export default function MainScreen({ route, navigation }: MainScreenProps) {
+    const { user, accessToken } = route.params;
 
     // Estado para controlar qué lista se muestra
     const [listType, setListType] = useState<'ofertas' | 'partes' | 'incidencias'>('ofertas');
@@ -40,7 +40,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
         setRefreshing(true);
         setLoading(true);
         let response;
-        response = await apiService.getOfertas(accessToken);
+        response = await apiService.getOfertas(accessToken, user.id);
 
         if (response.success && response.data) {
             setData(response.data);
@@ -60,7 +60,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
             if (route.params?.listType && route.params.listType !== listType) {
                 setListType(route.params.listType as 'ofertas' | 'partes');
                 // Limpia el parámetro para evitar cambios inesperados en futuros focos
-                navigation.setParams({listType: undefined});
+                navigation.setParams({ listType: undefined });
             }
         });
 
@@ -100,7 +100,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
     };
 
     // Función para renderizar el ítem de la lista según el tipo
-    const renderItem = ({item}: { item: Oferta }) => {
+    const renderItem = ({ item }: { item: Oferta }) => {
         // UI para una Oferta
         return (
             <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectItem(item)}>
@@ -121,7 +121,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007bff"/>
+                <ActivityIndicator size="large" color="#007bff" />
                 <Text style={styles.loadingText}>Cargando {listType === 'ofertas' ? 'ofertas' : 'partes'}...</Text>
             </View>
         );
@@ -136,9 +136,9 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
                         Ofertas de diseño
                     </Text>
                     <Text style={styles.headerSubtitle}>Selecciona un proyecto</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
-                                      style={styles.menuButton}>
-                        <Ionicons name="menu" size={30} color="#fff"/>
+                    <TouchableOpacity onPress={() => navigation.navigate('Menu', { user, accessToken })}
+                        style={styles.menuButton}>
+                        <Ionicons name="menu" size={30} color="#fff" />
                     </TouchableOpacity>
                 </View>
             )
@@ -150,9 +150,9 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
                         Partes mano de obra
                     </Text>
                     <Text style={styles.headerSubtitle}>Selecciona un proyecto</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
-                                      style={styles.menuButton}>
-                        <Ionicons name="menu" size={30} color="#fff"/>
+                    <TouchableOpacity onPress={() => navigation.navigate('Menu', { user, accessToken })}
+                        style={styles.menuButton}>
+                        <Ionicons name="menu" size={30} color="#fff" />
                     </TouchableOpacity>
                 </View>
             )
@@ -165,9 +165,9 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
                         Incidencias
                     </Text>
                     <Text style={styles.headerIncidenciasSubtitle}>Selecciona una incidencia</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Menu', {user, accessToken})}
-                                      style={styles.menuButton}>
-                        <Ionicons name="menu" size={30} color="#fff"/>
+                    <TouchableOpacity onPress={() => navigation.navigate('Menu', { user, accessToken })}
+                        style={styles.menuButton}>
+                        <Ionicons name="menu" size={30} color="#fff" />
                     </TouchableOpacity>
                 </View>
             )
@@ -191,7 +191,7 @@ export default function MainScreen({route, navigation}: MainScreenProps) {
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={fetchData} colors={["#00ffa6"]}/>
+                    <RefreshControl refreshing={refreshing} onRefresh={fetchData} colors={["#00ffa6"]} />
                 }
                 ListEmptyComponent={() => (
                     <View style={styles.emptyListContainer}>
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         backgroundColor: '#fff',
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 1,
         elevation: 2,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 12,
         shadowColor: "#000",
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,

@@ -41,7 +41,7 @@ export default function PartesListScreen({ route, navigation }: PartesListScreen
     const fetchPartes = useCallback(async () => {
         setRefreshing(true);
         setLoading(true);
-        const response = await apiService.getPartes(accessToken); // Suponiendo que tienes esta función en tu apiService
+        const response = await apiService.getPartes(accessToken, user.id); // Suponiendo que tienes esta función en tu apiService
         if (response.success && response.data) {
             setPartes(response.data);
             setFilteredPartes(response.data);
@@ -81,7 +81,7 @@ export default function PartesListScreen({ route, navigation }: PartesListScreen
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007bff"/>
+                <ActivityIndicator size="large" color="#007bff" />
                 <Text style={styles.loadingText}>Cargando partes de mano de obra...</Text>
             </View>
         );
@@ -93,8 +93,8 @@ export default function PartesListScreen({ route, navigation }: PartesListScreen
                 <Text style={styles.headerTitle}>Partes de Mano de Obra</Text>
                 <Text style={styles.headerSubtitle}>Tus partes recientes</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Menu', { user, accessToken })}
-                                  style={styles.menuButton}>
-                    <Ionicons name="menu" size={30} color="#fff"/>
+                    style={styles.menuButton}>
+                    <Ionicons name="menu" size={30} color="#fff" />
                 </TouchableOpacity>
             </View>
             <TextInput
@@ -115,7 +115,7 @@ export default function PartesListScreen({ route, navigation }: PartesListScreen
                 )}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={fetchPartes} colors={["#00ffa6"]}/>
+                    <RefreshControl refreshing={refreshing} onRefresh={fetchPartes} colors={["#00ffa6"]} />
                 }
                 ListEmptyComponent={() => (
                     <View style={styles.emptyListContainer}>
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         backgroundColor: '#fff',
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 1,
         elevation: 2,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 12,
         shadowColor: "#000",
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,

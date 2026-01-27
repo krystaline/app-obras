@@ -63,7 +63,7 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
 
     const fetchLineasAsignadas = useCallback(() => {
         setRefreshing(true)
-        apiService.getLineasParte(idOferta, accessToken).then(response => {
+        apiService.getLineasParte(idOferta, accessToken, user.id).then(response => {
             console.log("lineas asignadas", response.data)
             setLineasAsignadas(response.data);
         }).catch(error => {
@@ -78,7 +78,7 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
 
     const fetchLineasOferta = useCallback(() => {
         setRefreshing(true); // Inicia el estado de refrescando
-        apiService.getLineasOferta(idOferta, accessToken).then(response => {
+        apiService.getLineasOferta(idOferta, accessToken, user.id).then(response => {
             setLineas(response.data);
         }).catch(error => {
             console.error("Error fetching projects:", error);
@@ -92,7 +92,7 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
     const fetchImagenesOferta = useCallback(async () => {
         setRefreshing(true);
         try {
-            const response = await apiService.getImages(accessToken, idOferta);
+            const response = await apiService.getImages(accessToken, idOferta, user.id);
             if (response.success && response.data && response.data.images) {
                 // The API now returns a list of strings under the 'images' key
                 setImagenes(response.data.images);
@@ -166,7 +166,7 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
             });
             formData.append('idOferta', idOferta.toString());
             // 4. Enviar la imagen
-            const response = await apiService.postImage(accessToken, formData);
+            const response = await apiService.postImage(accessToken, formData, user.id);
 
             // 5. Manejar la respuesta
             if (response.success) {

@@ -42,11 +42,12 @@ export default function CrearDesplazamientoScreen({ navigation, route }: CrearDe
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const onSave = route.params?.onSave;
+    const user = route.params?.user;
 
     useEffect(() => {
         let mounted = true
         apiService
-            .getVehiculos()
+            .getVehiculos(user.id)
             .then((response: any) => {
                 if (!mounted) return
                 const data: Vehiculo[] = Array.isArray(response.data) ? response.data : []

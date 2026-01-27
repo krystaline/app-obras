@@ -118,7 +118,7 @@ export default function InfoParteMO({ route, navigation }: InfoParteMOProps) {
     const fetchPartesMO = useCallback(() => {
         setRefreshing(true); // Inicia el estado de refrescando
         console.log("Fetching partes of oferta", idOferta);
-        apiService.getPartesMO(idOferta, accessToken).then(response => {
+        apiService.getPartesMO(idOferta, accessToken, user.id).then(response => {
             console.log(response.data)
             setPartes(response.data);
         }).catch(error => {

@@ -1,6 +1,6 @@
 // IncidentListScreen.tsx
 
-import React, {useState, useCallback, useEffect} from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,10 +12,10 @@ import {
     Alert,
     ActivityIndicator
 } from 'react-native';
-import {StackScreenProps} from '@react-navigation/stack';
-import {MainTabParamList, RootStackParamList} from '../../App';
-import {Ionicons} from "@expo/vector-icons";
-import {apiService} from "../../config/apiService";
+import { StackScreenProps } from '@react-navigation/stack';
+import { MainTabParamList, RootStackParamList } from '../../App';
+import { Ionicons } from "@expo/vector-icons";
+import { apiService } from "../../config/apiService";
 // import { Parte } from "../../config/types";
 type Parte = {
     idParte: string;
@@ -29,8 +29,8 @@ type IncidentListScreenProps = StackScreenProps<MainTabParamList, 'ListarPartesM
     navigation: StackScreenProps<RootStackParamList>['navigation'];
 };
 
-export default function IncidentListScreen({route, navigation}: IncidentListScreenProps) {
-    const {user, accessToken} = route.params;
+export default function IncidentListScreen({ route, navigation }: IncidentListScreenProps) {
+    const { user, accessToken } = route.params;
 
     const [partes, setPartes] = useState<Parte[]>([]);
     const [refreshing, setRefreshing] = useState(false);
@@ -41,7 +41,7 @@ export default function IncidentListScreen({route, navigation}: IncidentListScre
     const fetchPartes = useCallback(async () => {
         setRefreshing(true);
         setLoading(true);
-        const response = await apiService.getPartes(accessToken); // Suponiendo que tienes esta función en tu apiService
+        const response = await apiService.getPartes(accessToken, user.id); // Suponiendo que tienes esta función en tu apiService
         if (response.success && response.data) {
             setPartes(response.data);
             setFilteredPartes(response.data);
@@ -81,7 +81,7 @@ export default function IncidentListScreen({route, navigation}: IncidentListScre
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007bff"/>
+                <ActivityIndicator size="large" color="#007bff" />
                 <Text style={styles.loadingText}>Cargando incidencias</Text>
             </View>
         );
@@ -93,7 +93,7 @@ export default function IncidentListScreen({route, navigation}: IncidentListScre
             <FlatList
                 data={filteredPartes}
                 keyExtractor={(item) => String(item.idParte)}
-                renderItem={({item}) => (
+                renderItem={({ item }) => (
                     <TouchableOpacity style={styles.itemContainer} onPress={() => handleSelectParte(item)}>
                         <Text style={styles.itemTitle}>Parte: {item.idParte}</Text>
                         <Text style={styles.itemDetails}>Proyecto: {item.idProyecto || 'N/A'}</Text>
@@ -102,7 +102,7 @@ export default function IncidentListScreen({route, navigation}: IncidentListScre
                 )}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={fetchPartes} colors={["#ffc400"]}/>
+                    <RefreshControl refreshing={refreshing} onRefresh={fetchPartes} colors={["#ffc400"]} />
                 }
                 ListEmptyComponent={() => (
                     <View style={styles.emptyListContainer}>
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         backgroundColor: '#fff',
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 1,
         elevation: 2,
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 12,
         shadowColor: "#000",
-        shadowOffset: {width: 0, height: 2},
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
         elevation: 5,

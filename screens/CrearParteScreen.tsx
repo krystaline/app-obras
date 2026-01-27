@@ -73,7 +73,7 @@ export default function CrearParteScreen({ route, navigation }: CrearParteScreen
 
     const [lastIdParte, setLastIdParte] = useState(0);
     React.useEffect(() => {
-        apiService.getLastPartId(accessToken).then(response => {
+        apiService.getLastPartId(accessToken, user.id).then(response => {
             setLastIdParte(response.data)
         }).catch(error => {
             console.error("Error getting last id:", error);
@@ -153,7 +153,7 @@ export default function CrearParteScreen({ route, navigation }: CrearParteScreen
 
         try {
             console.log(dataToSend)
-            const response = await apiService.createParte(dataToSend, accessToken)
+            const response = await apiService.createParte(dataToSend, accessToken, user.id)
             if (response.success) {
                 Alert.alert('Éxito', 'Parte creado correctamente.');
                 navigation.goBack(); // Navigate back after the successful submission

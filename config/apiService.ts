@@ -3,21 +3,23 @@ import { Platform } from 'react-native';
 import { ApiResponse, ParteImprimirPDF, Worker } from "./types";
 import { ParteMOEnviar } from "./types";
 
+const LOCAL = '10.0.2.106'
+const PROD = 'app.krystaline.es'
 // Configuración de la API
 const getBaseUrl = () => {
     if (__DEV__) {
         // En desarrollo
         if (Platform.OS === 'android') {
-            return 'http://10.0.2.106:8082';
+            return `http://${LOCAL}:8082`;
         } else if (Platform.OS === 'ios') {
             console.log("ESTOY EN IOS")
-            return 'http://10.0.2.106:8082';
+            return `http://${LOCAL}:8082`;
         } else {
-            return 'http://10.0.2.106:8082';
+            return `http://${LOCAL}:8082`;
         }
     } else {
         // En producción
-        return 'http://10.0.2.106:8082';
+        return `http://${PROD}:8082`;
     }
 };
 
@@ -96,138 +98,152 @@ class ApiService {
     }
 
 
-    async getLastPartId(accessToken: string): Promise<ApiResponse<any>> {
+    async getLastPartId(accessToken: string, userId: string): Promise<ApiResponse<any>> {
         return this.makeRequest('/api/partes/lastId', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }
 
-    async getMateriales(accessToken: string): Promise<ApiResponse<any>> {
+    async getMateriales(accessToken: string, userId: string): Promise<ApiResponse<any>> {
         return this.makeRequest('/api/materiales', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }
 
-    async getLineasOferta(idOferta: number, accessToken: string): Promise<ApiResponse<any[]>> {
+    async getLineasOferta(idOferta: number, accessToken: string, userId: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest(`/api/lineas/${idOferta}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }
 
-    async getLineasParte(idOferta: number, accessToken: string): Promise<ApiResponse<any[]>> {
+    async getLineasParte(idOferta: number, accessToken: string, userId: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest(`/api/${idOferta}/lineas`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }
 
     // Crear un nuevo parte
-    async createParte(parteData: ParteImprimirPDF, accessToken: string): Promise<ApiResponse<any>> {
+    async createParte(parteData: ParteImprimirPDF, accessToken: string, userId: string): Promise<ApiResponse<any>> {
         console.log('partepost', JSON.stringify(parteData.idParteAPP));
         return this.makeRequest('/api/partes/crearNUEVO', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
             body: JSON.stringify(parteData),
         });
     }
 
-    async imprimirPDF(parteId: string, accessToken: string): Promise<ApiResponse<any>> {
+    async imprimirPDF(parteId: string, accessToken: string, userId: string): Promise<ApiResponse<any>> {
         return this.makeRequest(`/api/pdf/${parteId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }
 
-    async getWorkers(accessToken: string): Promise<ApiResponse<any[]>> {
+    async getWorkers(accessToken: string, userId: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/workers', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             }
         })
     }
 
-    async assignWorkers(accessToken: string, parteId: number, workers: Worker[]): Promise<ApiResponse<any[]>> {
+    async assignWorkers(accessToken: string, parteId: number, workers: Worker[], userId: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest(`/api/partes/${parteId}/workers`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
             body: JSON.stringify(workers),
         })
     }
 
-    async getWorkersParte(accessToken: string, parteId: number): Promise<ApiResponse<any[]>> {
+    async getWorkersParte(accessToken: string, parteId: number, userId: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest(`/api/partes/${parteId}/workers`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             }
         })
     }
 
-    async createParteMO(accessToken: string, data: ParteMOEnviar): Promise<ApiResponse<any>> {
+    async createParteMO(accessToken: string, data: ParteMOEnviar, userId: string): Promise<ApiResponse<any>> {
         console.log(data)
         return this.makeRequest(`/api/partesMO/new`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${accessToken}`
+                'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
             body: JSON.stringify(data),
         })
     }
 
     // partes mano de obra
-    async getPartesMO(idOferta: number, accessToken: string): Promise<ApiResponse<any[]>> {
+    async getPartesMO(idOferta: number, accessToken: string, user: string): Promise<ApiResponse<any[]>> {
         console.log(idOferta)
         return this.makeRequest(`/api/partesMO/${idOferta}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
-            },
+                'user': user
+            }
         });
     }
 
     // Obtener lista de partes
-    async getPartes(accessToken: string): Promise<ApiResponse<any[]>> {
+    async getPartes(accessToken: string, user: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/partes', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': user
             },
         });
     }
 
-    async getOfertas(accessToken: string): Promise<ApiResponse<any[]>> {
+    async getOfertas(accessToken: string, userId: string): Promise<ApiResponse<any[]>> {
         console.log("ESTOY CONECTADO?? ", API_BASE_URL)
         return this.makeRequest('/api/ofertas', { // todo he cambiado esto, antes era ofertas
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }
 
-    async getPartePdf(idParteAPP: number, accessToken: string): Promise<ApiResponse<any>> {
+    async getPartePdf(idParteAPP: number, accessToken: string, userId: string): Promise<ApiResponse<any>> {
         return this.makeRequest(`/api/partes/parte/${idParteAPP}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             }
         });
     }
@@ -238,32 +254,36 @@ class ApiService {
     }
 
 
-    async getImages(accessToken: string, idOferta: number): Promise<ApiResponse<any>> {
+    async getImages(accessToken: string, idOferta: number, userId: string): Promise<ApiResponse<any>> {
         // This endpoint now returns an object like { "images": ["image1.jpg", "image2.jpg"] }
         return this.makeRequest(`/api/oferta/imagenes/${idOferta}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }
 
 
-    async postImage(accessToken: string, formdata: any): Promise<ApiResponse<any>> {
+    async postImage(accessToken: string, formdata: any, userId: string): Promise<ApiResponse<any>> {
         console.log("pimpam")
         return this.makeRequest(`/api/imagen`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
             body: formdata,
         });
     }
 
-    async getVehiculos(): Promise<ApiResponse<any[]>> {
+    async getVehiculos(accessToken: string, userId: string): Promise<ApiResponse<any[]>> {
         return this.makeRequest('/api/vehiculos', {
             method: 'GET',
             headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'user': userId
             },
         });
     }

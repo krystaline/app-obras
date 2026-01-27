@@ -66,10 +66,12 @@ export type MainTabParamList = {
     AsignarTrabajadoresScreen: { user: any; accessToken: string; parteId: number }; // TODO: cambiar cuando meta trabajadores
     CrearDesplazamiento: {
         onSave: (desplazamiento: VehiculoEnviarDTO) => void;
+        user: any;
     };
     AgregarMaterial: {
         onSave: (material: Material) => void;
-        accessToken: (string)
+        accessToken: (string);
+        user: any;
     };
     CrearMO: {
         onSave: (manodeobra: ManoDeObra) => void
