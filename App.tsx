@@ -8,12 +8,11 @@ import { StackScreenProps } from '@react-navigation/stack';
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
 import MenuScreen from './screens/MenuScreen';
-import { Desplazamiento, LineaOferta, LineasPorParte, ManoDeObra, Material, Oferta, VehiculoEnviarDTO } from "./config/types";
+import {LineaOferta, LineasPorParte, ManoDeObra, Material, Oferta, VehiculoEnviarDTO } from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
 import CrearParteScreen from "./screens/CrearParteScreen";
 import ParteDetail from "./screens/ParteDetailScreen";
-import { Text } from "react-native";
 import AsignarTrabajadoresScreen from "./screens/AsignarTrabajadoresScreen";
 import InfoParteMO from './screens/partesManoObra/InfoPartesMOScreen';
 import CrearParteMOScreen from "./screens/partesManoObra/NewParteMOScreen";

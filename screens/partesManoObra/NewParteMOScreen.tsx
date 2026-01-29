@@ -105,7 +105,7 @@ export default function CrearParteMOScreen({ route, navigation }: CrearParteMOSc
     };
 
     const handleNewDesplazamiento = () => {
-        navigation.navigate('CrearDesplazamiento', { onSave: handleAddDesplazamiento, user });
+        navigation.navigate('CrearDesplazamiento', { onSave: handleAddDesplazamiento, accessToken, user });
     };
     const handleNewManoDeObra = () => {
         navigation.navigate('CrearMO', { onSave: handleAddMO });
