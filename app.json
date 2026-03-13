@@ -52,7 +52,7 @@
         "@rnmapbox/maps",
         {
           "RNMapboxMapsImpl": "mapbox",
-          "RNMapboxMapsDownloadToken": "pk.eyJ1IjoiYWxlc21hcmNlbG8iLCJhIjoiY2x0a2F4a21rMDR6MjJrb2Z4Z256c29wZSJ9.2V8-6q52-W696n115l722g"
+          "RNMapboxMapsDownloadToken": "cambio"
         }
       ],
       [
