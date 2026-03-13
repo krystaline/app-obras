@@ -1,4 +1,4 @@
-// InfoOfertasScreen.tsx
+// InfoOfertasScreen_enriquecido.tsx
 import {
     Alert,
     FlatList,
@@ -25,9 +25,9 @@ type Tip = {
     id: number | undefined;
     image_name: string;
 };
-type InfoOfertaProps = StackScreenProps<MainTabParamList, 'InfoOferta'>; // Removed `parte: ParteData` from here
-export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // Removed `oferta` from destructuring props
-    const { idOferta } = route.params as { idOferta: number }; // Extract oferta from route.params
+type InfoOfertaProps = StackScreenProps<MainTabParamList, 'InfoOferta'>;
+export default function InfoOferta({ route, navigation }: InfoOfertaProps) {
+    const { idOferta } = route.params as { idOferta: number };
     const { user } = route.params as { user: any }
     const { accessToken } = route.params as { accessToken: string }
     const [lineas, setLineas] = useState<LineaOferta[]>()
@@ -39,12 +39,8 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
 
-
     const renderImage = ({ item }: { item: string }) => {
-        // 'item' is now a string, e.g., "imagen1.jpg"
         const imageUrl = `${apiService.getBaseUrl()}/api/images/imagenes/${item}`;
-        console.log("Image URL to display:", imageUrl);
-
         return (
             <TouchableOpacity
                 style={styles.imageContainer}
@@ -61,43 +57,110 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
         );
     };
 
-    const fetchLineasAsignadas = useCallback(() => {
-        setRefreshing(true)
-        apiService.getLineasParte(idOferta, accessToken, user.id).then(response => {
-            console.log("lineas asignadas", response.data)
-            setLineasAsignadas(response.data);
-        }).catch(error => {
-            console.error("Error fetching projects:", error);
-            Alert.alert("Error", "No se pudieron cargar las líneas del parte."); // Opcional: mostrar un error al usuario
-        }).finally(() => {
-            setLoading(false);
-            setRefreshing(false); // Finaliza el estado de refrescando
-        });
-    }, [idOferta, accessToken])
+    // Merge fallback (client-side) si el backend no devuelve las líneas "enriquecidas"
+    const mergeLineasClient = (lineasOferta: LineaOferta[] = [], lineasParte: LineasPorParte[] = []) => {
+        const buildKeyOferta = (linea: any) => `${linea.ocl_IdOferta ?? 0}::${linea.ocl_idlinea ?? 0}`;
+        const buildKeyParte = (linea: any) => `${linea.idOferta ?? 0}::${linea.idLinea ?? 0}`;
 
+        const mapParte = new Map<string, LineasPorParte[]>();
+        for (const p of lineasParte) {
+            const k = buildKeyParte(p as any);
+            if (!mapParte.has(k)) mapParte.set(k, []);
+            mapParte.get(k)!.push(p);
+        }
 
-    const fetchLineasOferta = useCallback(() => {
-        setRefreshing(true); // Inicia el estado de refrescando
-        apiService.getLineasOferta(idOferta, accessToken, user.id).then(response => {
-            setLineas(response.data);
-        }).catch(error => {
-            console.error("Error fetching projects:", error);
-            Alert.alert("Error", "No se pudieron cargar las líneas de la oferta."); // Opcional: mostrar un error al usuario
-        }).finally(() => {
-            setLoading(false);
-            setRefreshing(false); // Finaliza el estado de refrescando
+        const enriched = lineasOferta.map(lo => {
+            const key = buildKeyOferta(lo as any);
+            const matches = mapParte.get(key) ?? [];
+            const parte = matches.length ? matches[0] : undefined;
+
+            return {
+                ...lo,
+                esta_en_parte: !!parte ? 1 : 0,
+                idParteAPP: parte?.idParteAPP ?? null,
+                cantidad_en_parte: parte?.cantidad ?? 0,
+                certificado_en_parte: parte?.certificado ?? 0,
+                partesAsociadas: matches
+            } as any;
         });
-    }, [idOferta, accessToken]); // Dependencias para useCallback
+
+        return enriched;
+    }
+
+    const fetchEnrichedLineas = useCallback(async () => {
+        setRefreshing(true);
+        setLoading(true);
+        try {
+            // Intentamos obtener las líneas enriquecidas desde el backend usando el endpoint actual
+            // (Se asume que el backend devolverá la propiedad `esta_en_parte` o campos `idParteAPP` cuando esté implementado)
+            const resp = await apiService.getLineasOferta(idOferta, accessToken, user.id);
+
+            if (!resp.success) {
+                throw new Error(resp.error || 'Error al obtener líneas');
+            }
+
+            const data = resp.data ?? [];
+
+            // Detectamos si la respuesta ya viene "enriquecida"
+            const first = Array.isArray(data) && data.length ? data[0] : null;
+            const enrichedFlag = first && (('esta_en_parte' in first) || ('idParteAPP' in first));
+
+            if (enrichedFlag) {
+                // Backend ya devuelve líneas enriquecidas: usamos directamente
+                setLineas(data as LineaOferta[]);
+
+                // Construimos lineasAsignadas a partir de los campos devueltos para mantener el UI actual
+                const partesFromEnriched: LineasPorParte[] = (data as any[])
+                    .filter(d => d.idParteAPP || d.ppcl_IdParte)
+                    .map(d => ({
+                        idParteERP: d.ppcl_IdParte ?? 0,
+                        idParteAPP: d.idParteAPP ?? 0,
+                        revision: d.ocl_revision ?? 0,
+                        capitulo: (d.ppcl_Capitulo ?? d.ppcl_Capitulo) as any,
+                        titulo: d.ppcl_DescripArticulo ?? d.ocl_Descrip ?? '',
+                        idLinea: d.ocl_idlinea ?? 0,
+                        idArticulo: d.ocl_IdArticulo ?? d.ppcl_IdArticulo ?? '',
+                        descriparticulo: d.ppcl_DescripArticulo ?? d.ocl_Descrip ?? '',
+                        unidadmedida: d.ppcl_UnidadMedida ?? d.ocl_tipoUnidad ?? '',
+                        cantidad: d.ppcl_cantidad ?? d.cantidad_en_parte ?? 0,
+                        cantidad_total: d.ocl_UnidadesPres ?? 0,
+                        certificado: d.ppcl_Certificado ?? (d.certificado_en_parte ?? 0),
+                        fechainsertupdate: d.fechainsertupdate ?? null,
+                        idOferta: d.ocl_IdOferta ?? idOferta,
+                        id: d.id ?? 0
+                    })) as LineasPorParte[];
+
+                setLineasAsignadas(partesFromEnriched);
+
+            } else {
+                // Fallback: el backend no está enriquecido todavía -> hacemos la lógica antigua
+                const ofertaLineas = data as LineaOferta[];
+                // Obtenemos las líneas de partes y hacemos merge en cliente
+                const respParte = await apiService.getLineasParte(idOferta, accessToken, user.id);
+                if (!respParte.success) throw new Error(respParte.error || 'Error al obtener líneas de parte');
+
+                const lineasParte = respParte.data ?? [];
+                const enriched = mergeLineasClient(ofertaLineas, lineasParte as LineasPorParte[]);
+                setLineas(enriched as any);
+                setLineasAsignadas(lineasParte as LineasPorParte[]);
+            }
+
+        } catch (error: any) {
+            console.error('Error fetching enriched lines:', error);
+            Alert.alert('Error', 'No se pudieron cargar las líneas de la oferta o las líneas del parte.');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, [idOferta, accessToken, user.id]);
 
     const fetchImagenesOferta = useCallback(async () => {
         setRefreshing(true);
         try {
             const response = await apiService.getImages(accessToken, idOferta, user.id);
             if (response.success && response.data && response.data.images) {
-                // The API now returns a list of strings under the 'images' key
                 setImagenes(response.data.images);
             } else {
-                console.error("Failed to fetch image names:", response.error);
                 setImagenes([]);
             }
         } catch (error) {
@@ -106,29 +169,25 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
         } finally {
             setRefreshing(false);
         }
-    }, [idOferta, accessToken, apiService]);
-
+    }, [idOferta, accessToken, apiService, user.id]);
 
     React.useEffect(() => {
-        fetchLineasOferta(); // Llama a la función al montar el componente
-        fetchLineasAsignadas();
+        fetchEnrichedLineas();
         fetchImagenesOferta();
-    }, [fetchLineasOferta, fetchImagenesOferta]); // Dependencia para useEffect
+    }, [fetchEnrichedLineas, fetchImagenesOferta]);
 
     const onRefresh = useCallback(() => {
-        fetchLineasOferta(); // Llama a la misma función para refrescar
+        fetchEnrichedLineas();
         fetchImagenesOferta();
-        fetchLineasAsignadas();
-    }, [fetchLineasOferta, fetchImagenesOferta]);
+    }, [fetchEnrichedLineas, fetchImagenesOferta]);
 
-    if (!lineas && !loading) { // Cambia la condición para mostrar el error solo si no hay líneas y no está cargando
+    if (!lineas && !loading) {
         return (
             <View style={styles.container}>
                 <Text style={styles.errorText}>No se han proporcionado datos del parte.</Text>
             </View>
         );
     }
-
 
     const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
     const enviarImagen = async () => {
@@ -142,33 +201,23 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
             });
 
             if (result.canceled || !result.assets || result.assets.length === 0) {
-                console.log('No se seleccionaron imágenes.');
                 return;
             }
 
-            // 1. Obtener la URI y el nombre del archivo directamente del resultado
             const asset = result.assets[0];
             const imageUri = asset.uri;
             const imageName = asset.fileName;
-
-            // 2. Opcional: Actualizar el estado para mostrar la imagen en la UI si es necesario
-            // Aunque no se usa para el envío, es bueno tenerlo
             setSelectedImage(imageUri);
 
-            // 3. Crear el objeto FormData para el envío
             const formData = new FormData();
-
             // @ts-ignore
             formData.append('image', {
-                uri: imageUri, // ¡Usamos la URI directa del resultado!
+                uri: imageUri,
                 name: imageName,
                 type: 'image/jpeg',
             });
             formData.append('idOferta', idOferta.toString());
-            // 4. Enviar la imagen
             const response = await apiService.postImage(accessToken, formData, user.id);
-
-            // 5. Manejar la respuesta
             if (response.success) {
                 Alert.alert('Éxito', 'La imagen se ha subido correctamente.');
             } else {
@@ -181,67 +230,64 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
         }
     };
 
-    const groupLineasByParteAndQuantityStatus = (lineas: LineaOferta[]) => {
-        const groupedByParte: { [key: string]: { completed: LineasPorParte[], pending: LineaOferta[], idParteERP: number, idParteAPP: number } } = {};
-
-        lineas.forEach(linea => {
-            const idParteERP = linea.ppcl_IdParte || 0; // Use 0 for lines without a parte
-            const idParteAPP = linea.idParteAPP || 0;
-
-            const key = `${idParteERP}-${idParteAPP}`;
-
-            if (!groupedByParte[key]) {
-                groupedByParte[key] = { completed: [], pending: [], idParteERP, idParteAPP };
-            }
-            // @ts-ignore
-            if (linea.ppcl_cantidad <= linea.ocl_UnidadesPres) {
-                console.log("linea completada", linea)
-                groupedByParte[key].completed.push(linea);
-            } else {
-                groupedByParte[key].pending.push(linea);
-            }
-        });
-
-        return groupedByParte;
-    };
-
     const groupLineasAsignadas = (lineas: LineasPorParte[]) => {
-        const groupedByParte: { [key: string]: { completed: LineasPorParte[], pending: LineasPorParte[], idParteERP: number, idParteAPP: number } } = {};
+        const groupedByParte: { [key: string]: { completed: LineasPorParte[], pending: LineasPorParte[], idParteERP: number, idParteAPP?: number } } = {};
 
         lineas.forEach(linea => {
-            const idParteERP = linea.idParteERP || 0; // Use 0 for lines without a parte
-            const idParteAPP = linea.idParteAPP || 0;
+            const rawParte = (linea as any).ppcl_IdParte ?? (linea as any).idParteERP ?? 0;
+            const idParteERP = (typeof rawParte === 'string') ? Number(rawParte.trim()) || 0 : Number(rawParte || 0);
 
-            const key = `${idParteERP}-${idParteAPP}`;
+            const idParteAPP = (linea as any).idParteAPP ? Number((linea as any).idParteAPP) : undefined;
+
+            const key = `${idParteERP}`;
 
             if (!groupedByParte[key]) {
                 groupedByParte[key] = { completed: [], pending: [], idParteERP, idParteAPP };
             }
 
-            if (linea.cantidad <= linea.cantidad_total) {
-                console.log("linea completada", linea)
+            const certificadoRaw = Number((linea as any).ppcl_Certificado ?? (linea as any).certificado ?? 0);
+            const certificadoValido = idParteERP !== 0 ? certificadoRaw : 0;
+
+            if (certificadoValido > 0) {
                 groupedByParte[key].completed.push(linea);
             } else {
                 groupedByParte[key].pending.push(linea);
             }
+
+            if (!groupedByParte[key].idParteAPP && idParteAPP) {
+                groupedByParte[key].idParteAPP = idParteAPP;
+            }
         });
+
+        const resumen = Object.values(groupedByParte).map(g => ({
+            idParteERP: g.idParteERP,
+            idParteAPP: g.idParteAPP ?? '-',
+            completed: g.completed.length,
+            pending: g.pending.length,
+            total: g.completed.length + g.pending.length
+        }));
+        console.log('[groupLineasAsignadas] resumen grupos:', resumen);
 
         return groupedByParte;
     };
 
     const groupedAndStatusLineas = lineasAsignadas ? groupLineasAsignadas(lineasAsignadas) : {};
-    const partes = Object.values(groupedAndStatusLineas).sort((a, b) => a.idParteERP - b.idParteERP);
+    const partes = Object.values(groupedAndStatusLineas)
+        .sort((a, b) => {
+            if (a.idParteERP === 0 && b.idParteERP === 0) return 0;
+            if (a.idParteERP === 0) return 1;
+            if (b.idParteERP === 0) return -1;
+            return a.idParteERP - b.idParteERP;
+        });
 
-
-    // @ts-ignore
     return (
         <ScrollView style={styles.container}
             refreshControl={
                 <RefreshControl
                     refreshing={refreshing}
                     onRefresh={onRefresh}
-                    colors={['#3EB1A5']} // Color del spinner en Android
-                    tintColor={'#3EB1A5'} // Color del spinner en iOS
+                    colors={['#3EB1A5']}
+                    tintColor={'#3EB1A5'}
                 />
             }
         >
@@ -313,24 +359,17 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
                         )}
                     </View>
                 </Modal>
-                {/*
-
-                <TouchableOpacity style={styles.seeAllImagesButton} onPress={() => {
-                }}>
-                    <Text style={styles.label}>Ver todas las imágenes</Text>
-                </TouchableOpacity>
-                  */}
             </View>
 
-            { /* LINEAS DE LA OFERTA */}
             <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('CrearParte',
                 {
                     user: user,
                     accessToken: accessToken,
                     oferta: oferta,
-                    lineas: lineas!,
+                    lineas: lineas || [],
                     proyecto: oferta.descripcion ? oferta.descripcion : "",
                 })}><Text>➕ Crear Parte</Text></TouchableOpacity>
+
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Líneas de la Oferta:</Text>
                 {lineas && lineas.length > 0 ? (
@@ -339,6 +378,9 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
                             <Text style={styles.activityText}>{linea.ocl_Descrip}</Text>
                             <Text style={styles.activityText}>Cantidad: {linea.ocl_UnidadesPres} {linea.ocl_tipoUnidad}</Text>
                             <Text style={styles.activityText}>ID Actividad: {linea.ocl_IdArticulo}</Text>
+                            {(linea as any).esta_en_parte ? (
+                                <Text style={styles.activityText}>En parte: {(linea as any).idParteAPP ?? (linea as any).ppcl_IdParte}</Text>
+                            ) : null}
                         </View>
                     ))
                 ) : (
@@ -360,21 +402,19 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
                                 style={styles.groupTitle}>{parte.idParteERP ? "Grupo parte: " + parte.idParteERP : "Líneas sin parte"}</Text>
                             {parte.completed.length > 0 && (
                                 <View>
-                                    {/*  <Text style={styles.subGroupTitle}>Cantidad Realizada || Cantidad Ofertada:</Text> */}
                                     {parte.completed.map((linea: LineasPorParte) => (
                                         <TouchableOpacity
                                             key={linea.id}
                                             onPress={() => navigation.navigate("InfoLinea", {
                                                 user,
                                                 accessToken,
-                                                linea, // TODO: SEGUIR CON ESTO
+                                                linea,
                                                 idParteAPP: parte.idParteAPP,
                                                 idParteERP: parte.idParteERP
                                             })}>
                                             <View
                                                 style={linea.certificado === 0 ? styles.activityCardNoCert : styles.activityCard}>
                                                 <Text style={styles.activityText}>{linea.descriparticulo}</Text>
-                                                <Text style={styles.activityText}>{linea.idParteAPP}</Text>
                                                 <Text style={styles.activityText}>Cantidad
                                                     (realizado/ofertado): {linea.cantidad} / {linea.cantidad_total}</Text>
                                                 <Text style={styles.activityText}>ID
@@ -422,7 +462,6 @@ export default function InfoOferta({ route, navigation }: InfoOfertaProps) { // 
             </View>
         </ScrollView>
     )
-        ;
 };
 
 const styles = StyleSheet.create({
@@ -436,7 +475,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.9)', // Un fondo semi-transparente
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
     },
     modalImage: {
         width: '100%',
@@ -446,7 +485,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 50,
         right: 20,
-        zIndex: 1, // Para asegurar que esté por encima de la imagen
+        zIndex: 1,
     },
     grid: {
         paddingTop: 10,
@@ -455,7 +494,7 @@ const styles = StyleSheet.create({
     imageContainer: {
         width: 100,
         height: 100,
-        padding: 2, // Espacio entre las imágenes
+        padding: 2,
     },
     image: {
         width: '100%',
@@ -467,7 +506,7 @@ const styles = StyleSheet.create({
         marginTop: 15,
         marginBottom: 10,
         paddingHorizontal: 10,
-        backgroundColor: '#ececec', // Light background for group titles
+        backgroundColor: '#ececec',
         paddingVertical: 10,
         borderRadius: 5,
     },
@@ -584,7 +623,7 @@ const styles = StyleSheet.create({
     },
     signatureImage: {
         width: '100%',
-        height: 200, // Ajusta la altura según sea necesario
+        height: 200,
         borderWidth: 1,
         borderColor: '#ddd',
         marginTop: 10,

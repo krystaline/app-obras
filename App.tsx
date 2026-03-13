@@ -8,7 +8,7 @@ import { StackScreenProps } from '@react-navigation/stack';
 import LoginScreen from './screens/LoginScreen';
 import MainScreen from './screens/MainScreen';   // Tu pantalla de lista (ahora .tsx)
 import MenuScreen from './screens/MenuScreen';
-import {LineaOferta, LineasPorParte, ManoDeObra, Material, Oferta, VehiculoEnviarDTO } from "./config/types";
+import { LineaOferta, LineasPorParte, ManoDeObra, Material, Oferta, VehiculoEnviarDTO } from "./config/types";
 import InfoOferta from "./screens/InfoOfertasScreen";
 import InfoLinea from "./screens/InfoLineaScreen";
 import CrearParteScreen from "./screens/CrearParteScreen";
@@ -19,6 +19,7 @@ import CrearParteMOScreen from "./screens/partesManoObra/NewParteMOScreen";
 import CrearDesplazamientoScreen from "./screens/partesManoObra/CrearDesplazamientoScreen";
 import CrearMOScreen from "./screens/partesManoObra/CrearMOScreen";
 import AgregarMaterialScreen from "./screens/partesManoObra/AgregarMaterialScreen";
+import MapScreen from "./screens/mapas/MapScreen";
 
 type Parte = {
     id: number,
@@ -60,8 +61,8 @@ export type MainTabParamList = {
     };
     InfoOferta: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
     InfoParteMO: { user: any; accessToken: string; idOferta: number; oferta: Oferta };
-    InfoLinea: { user: any; accessToken: string; linea: LineaOferta | LineasPorParte, idParteERP: number, idParteAPP: number }
-    ParteDetail: { user: any; accessToken: string; idParteERP: number, idParteAPP: number };
+    InfoLinea: { user: any; accessToken: string; linea: LineaOferta | LineasPorParte, idParteERP: number, idParteAPP: number | undefined }
+    ParteDetail: { user: any; accessToken: string; idParteERP: number, idParteAPP: number | undefined };
     AsignarTrabajadoresScreen: { user: any; accessToken: string; parteId: number }; // TODO: cambiar cuando meta trabajadores
     CrearDesplazamiento: {
         onSave: (desplazamiento: VehiculoEnviarDTO) => void;
@@ -75,7 +76,8 @@ export type MainTabParamList = {
     };
     CrearMO: {
         onSave: (manodeobra: ManoDeObra) => void
-    }
+    };
+    MapScreen: { user: any; accessToken: string; };
 }
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -269,6 +271,8 @@ function MainTabNavigator({ route }: MainTabNavigatorProps) {
                     )
                 }}
             </MainTabStack.Screen>
+
+            <MainTabStack.Screen name="MapScreen" component={MapScreen} />
         </MainTabStack.Navigator>
     );
 }

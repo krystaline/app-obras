@@ -20,7 +20,7 @@ export default function MenuScreen({ navigation, route }: MenuScreenProps) {
 
     // Al seleccionar una opción, se vuelve a la pantalla anterior (MainTab)
     // y se le pasa el parámetro 'listType'
-    const handleSelectOption = (listType: 'ofertas' | 'partes' | 'incidencias') => {
+    const handleSelectOption = (listType: 'ofertas' | 'partes' | 'incidencias' | 'mapas') => {
         // Usa `goBack` para cerrar la modal y pasar parámetros a la pantalla anterior.
         navigation.goBack();
         // Usa `Maps` para ir a la pantalla de la lista, pasando el parámetro.
@@ -39,6 +39,16 @@ export default function MenuScreen({ navigation, route }: MenuScreenProps) {
         // Sin embargo, si `MenuScreen` se abre como modal, no hay un `MainTab` "detrás".
         // La forma más robusta es usar `navigation.navigate` directamente a la pantalla principal
         // y pasar el parámetro. Esto sobrescribirá la pantalla actual.
+
+        if (listType == "mapas") {
+            navigation.navigate("MainTab", {
+                user,
+                accessToken,
+                screen: "MapScreen",
+                params: { user, accessToken }
+            });
+            return;
+        }
 
         navigation.navigate("MainTab", {
             user,
@@ -66,11 +76,15 @@ export default function MenuScreen({ navigation, route }: MenuScreenProps) {
                 onPress={() => handleSelectOption('incidencias')}>
                 <Text style={styles.menuItemText}>⚠️ Incidencias (no disponible)</Text>
             </TouchableOpacity>
-
+            <TouchableOpacity disabled style={[styles.menuItem, styles.menuQuaternaryColor, styles.disabledMenuItem]}
+                onPress={() => handleSelectOption('mapas')}>
+                <Text style={styles.menuItemText}>📍 Mapas</Text>
+            </TouchableOpacity>
             <View style={styles.spacer} />
         </SafeAreaView>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -111,6 +125,9 @@ const styles = StyleSheet.create({
     },
     menuTertiaryColor: {
         borderLeftColor: '#e8ca32',
+    },
+    menuQuaternaryColor: {
+        borderLeftColor: '#665bbdff',
     },
     menuItemText: {
         fontSize: 18,

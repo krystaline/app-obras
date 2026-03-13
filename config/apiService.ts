@@ -5,6 +5,7 @@ import { ParteMOEnviar } from "./types";
 
 const LOCAL = '10.0.2.106'
 const PROD = 'app.krystaline.es'
+const MAC = '192.168.0.22'
 // Configuración de la API
 const getBaseUrl = () => {
     if (__DEV__) {

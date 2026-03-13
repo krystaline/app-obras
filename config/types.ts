@@ -28,6 +28,10 @@ export interface LineaOferta {
     ocl_tipoUnidad: string | null;
     ppcl_Certificado: number;
     ppcc_observaciones: string | null;
+
+
+    esta_en_parte?: number | null
+    cantidad_en_parte?: number | null
 }
 
 export interface LineaPedidoPDF {
@@ -72,7 +76,7 @@ export interface ParteImprimirPDF {
     comentarios: string | null
     lineas: LineaPedidoPDF[]
     firma: string
-    idParteAPP: number // este SIEMPRE va a ir lleno
+    idParteAPP: number | null // este SIEMPRE va a ir lleno
     idProyecto: string | null
 }
 
